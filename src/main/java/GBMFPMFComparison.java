@@ -15,7 +15,7 @@ public class GBMFPMFComparison {
 
     public static void main(String[] args){
         try {
-            DataModel datamodel = DataModel.load("gml100k");
+            DataModel datamodel = DataModel.load("gml1M");
 
             LinePlot plot = new LinePlot(NUM_FACTORS, "Number of latent factors", "MAE");
 
@@ -25,7 +25,7 @@ public class GBMFPMFComparison {
 
             // Evaluate PMF Recommender
             for (int factors : NUM_FACTORS) {
-                Recommender pmf = new PMF(datamodel, factors, NUM_ITERS, RANDOM_SEED);
+                Recommender pmf = new PMF(datamodel, factors, NUM_ITERS, 0.01, 0.001, RANDOM_SEED);
                 pmf.fit();
 
                 QualityMeasure fmae = new GMAE(pmf, 0.0);
@@ -48,7 +48,7 @@ public class GBMFPMFComparison {
 
             // Evaluate GBMF Recommender
             for (int factors : NUM_FACTORS) {
-                Recommender gbmf = new GBMF(datamodel, factors, NUM_ITERS, RANDOM_SEED);
+                Recommender gbmf = new GBMF(datamodel, factors, NUM_ITERS,0.02, 0.001, RANDOM_SEED);
                 gbmf.fit();
 
                 QualityMeasure fbgmae = new GMAE(gbmf, 0.0);
