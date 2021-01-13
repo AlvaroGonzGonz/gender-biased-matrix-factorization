@@ -52,6 +52,10 @@ public class GBMF extends Recommender {
      *   <li><b>numIters:</b>: int value with the number of iterations.
      *   <li><b><em>gamma</em></b> (optional): double value with the learning rate hyper-parameter. If
      *       missing, it is set to 0.01.
+     *   <li><b><em>etaf</em></b> (optional): double value with the learning rate hyper-parameter for
+     *       feminine users. If missing, it is set to 0.01.
+     *   <li><b><em>etam</em></b> (optional): double value with the learning rate hyper-parameter for
+     *       masculine users. If missing, it is set to 0.01.
      *   <li><b><em>lambda</em></b> (optional): double value with the regularization hyper-parameter.
      *       If missing, it is set to 0.05.
      *   <li><b><em>seed</em></b> (optional): random seed for random numbers generation. If missing,
@@ -129,6 +133,8 @@ public class GBMF extends Recommender {
      * @param numIters Number of iterations
      * @param lambda Regularization parameter
      * @param gamma Learning rate parameter
+     * @param etaf Learning rate parameter
+     * @param etam Learning rate parameter
      * @param seed Seed for random numbers generation
      */
     public GBMF(
@@ -312,7 +318,13 @@ public class GBMF extends Recommender {
                 + "; "
                 + "lambda="
                 + this.lambda
-                + ";";
+                + "; "
+                + "etaf="
+                + this.etaf
+                + "; "
+                + "etam="
+                + this.etam
+                + ")";
     }
 
     /** Auxiliary inner class to parallelize user factors computation */
