@@ -30,6 +30,10 @@ public class GBMF extends Recommender {
     /** Learning rate */
     protected final double gamma;
 
+    /** Learning rate for feminine and masculine*/
+    protected final double etaf;
+    protected final double etam;
+
     /** Regularization parameter */
     protected final double lambda;
 
@@ -64,6 +68,8 @@ public class GBMF extends Recommender {
                 (int) params.get("numIters"),
                 params.containsKey("lambda") ? (double) params.get("lambda") : DEFAULT_LAMBDA,
                 params.containsKey("gamma") ? (double) params.get("gamma") : DEFAULT_GAMMA,
+                params.containsKey("etaf") ? (double) params.get("etaf") : DEFAULT_GAMMA,
+                params.containsKey("etam") ? (double) params.get("etam") : DEFAULT_GAMMA,
                 params.containsKey("seed") ? (long) params.get("seed") : System.currentTimeMillis());
     }
 
@@ -87,7 +93,7 @@ public class GBMF extends Recommender {
      * @param seed Seed for random numbers generation
      */
     public GBMF(DataModel datamodel, int numFactors, int numIters, long seed) {
-        this(datamodel, numFactors, numIters, DEFAULT_LAMBDA, DEFAULT_GAMMA, seed);
+        this(datamodel, numFactors, numIters, DEFAULT_LAMBDA, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, seed);
     }
 
     /**
@@ -99,7 +105,7 @@ public class GBMF extends Recommender {
      * @param lambda Regularization parameter
      */
     public GBMF(DataModel datamodel, int numFactors, int numIters, double lambda) {
-        this(datamodel, numFactors, numIters, lambda, DEFAULT_GAMMA, System.currentTimeMillis());
+        this(datamodel, numFactors, numIters, lambda, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, System.currentTimeMillis());
     }
 
     /**
@@ -112,7 +118,7 @@ public class GBMF extends Recommender {
      * @param seed Seed for random numbers generation
      */
     public GBMF(DataModel datamodel, int numFactors, int numIters, double lambda, long seed) {
-        this(datamodel, numFactors, numIters, lambda, DEFAULT_GAMMA, seed);
+        this(datamodel, numFactors, numIters, lambda, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, seed);
     }
 
     /**
@@ -126,13 +132,15 @@ public class GBMF extends Recommender {
      * @param seed Seed for random numbers generation
      */
     public GBMF(
-            DataModel datamodel, int numFactors, int numIters, double lambda, double gamma, long seed) {
+            DataModel datamodel, int numFactors, int numIters, double lambda, double gamma, double etaf, double etam, long seed) {
         super(datamodel);
 
         this.numFactors = numFactors;
         this.numIters = numIters;
         this.lambda = lambda;
         this.gamma = gamma;
+        this.etaf = etaf;
+        this.etam = etam;
 
         Random rand = new Random(seed);
 
@@ -204,6 +212,24 @@ public class GBMF extends Recommender {
      */
     public double getGamma() {
         return this.gamma;
+    }
+
+    /**
+     * Get the learning rate parameter of the model
+     *
+     * @return Etaf
+     */
+    public double getEtaf() {
+        return this.etaf;
+    }
+
+    /**
+     * Get the learning rate parameter of the model
+     *
+     * @return Etam
+     */
+    public double getEtam() {
+        return this.etam;
     }
 
     /**
@@ -286,7 +312,7 @@ public class GBMF extends Recommender {
                 + "; "
                 + "lambda="
                 + this.lambda
-                + ")";
+                + ";";
     }
 
     /** Auxiliary inner class to parallelize user factors computation */
@@ -324,8 +350,8 @@ public class GBMF extends Recommender {
                 int userIndex = item.getUserAt(pos);
                 double error = item.getRatingAt(pos) - predict(userIndex, itemIndex);
                 for (int k = 0; k < numFactors; k++) {
-                    qf[itemIndex][k] += gamma * (error * g[userIndex][userIndex] * p[userIndex][k] - lambda * qf[itemIndex][k]);
-                    qm[itemIndex][k] += gamma * (error * (1.0 - g[userIndex][userIndex]) * p[userIndex][k] - lambda * qm[itemIndex][k]);
+                    qf[itemIndex][k] += etaf * (error * g[userIndex][userIndex] * p[userIndex][k] - lambda * qf[itemIndex][k]);
+                    qm[itemIndex][k] += etam * (error * (1.0 - g[userIndex][userIndex]) * p[userIndex][k] - lambda * qm[itemIndex][k]);
                 }
             }
         }

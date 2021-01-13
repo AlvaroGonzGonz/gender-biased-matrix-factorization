@@ -25,7 +25,7 @@ public class GBMFPMFComparison {
 
             // Evaluate PMF Recommender
             for (int factors : NUM_FACTORS) {
-                Recommender pmf = new PMF(datamodel, factors, NUM_ITERS, 0.01, 0.001, RANDOM_SEED);
+                Recommender pmf = new PMF(datamodel, factors, NUM_ITERS, 0.028, 0.0016, RANDOM_SEED);
                 pmf.fit();
 
                 QualityMeasure fmae = new GMAE(pmf, 0.0);
@@ -48,7 +48,7 @@ public class GBMFPMFComparison {
 
             // Evaluate GBMF Recommender
             for (int factors : NUM_FACTORS) {
-                Recommender gbmf = new GBMF(datamodel, factors, NUM_ITERS,0.02, 0.001, RANDOM_SEED);
+                Recommender gbmf = new GBMF(datamodel, factors, NUM_ITERS,0.028, 0.0016, 0.0015, 0.00065, RANDOM_SEED);
                 gbmf.fit();
 
                 QualityMeasure fbgmae = new GMAE(gbmf, 0.0);
