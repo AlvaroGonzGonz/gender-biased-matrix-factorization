@@ -13,7 +13,7 @@ public class GMAE extends QualityMeasure {
         this.gender = Double.NaN;
     }
 
-    public GMAE(Recommender recommender, Double gender) {
+    public GMAE(Recommender recommender, double gender) {
         super(recommender);
         this.gender = gender;
     }
