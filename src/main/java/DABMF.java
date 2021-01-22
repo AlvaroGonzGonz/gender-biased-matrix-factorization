@@ -170,6 +170,7 @@ public class DABMF extends Recommender {
                 if (g == k && datamodel.getUser(k).getDataBank().getInt("age") <= this.age)
                     this.g[g][k] = 1.0;
                 else this.g[g][k] = 0.0;
+                System.out.println();
             }
         }
 
