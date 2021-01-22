@@ -162,8 +162,8 @@ public class ABMF extends Recommender {
         this.g = new double[datamodel.getNumberOfUsers()][datamodel.getNumberOfUsers()];
         for (int g = 0; g < datamodel.getNumberOfUsers(); g++){
             for (int k = 0; k < datamodel.getNumberOfUsers(); k++){
-                if (g == k)
-                    this.g[g][k] = 1.0 - datamodel.getUser(k).getDataBank().getDouble("age");
+                if (g == k && this.tier(datamodel.getUser(k).getDataBank().getInt("age")) != -1)
+                    this.g[g][k] = 1.0 - this.tier(datamodel.getUser(k).getDataBank().getInt("age"));
                 else this.g[g][k] = 0.0;
             }
         }
@@ -276,6 +276,26 @@ public class ABMF extends Recommender {
      */
     public double[] getMaleItemFactors(int itemIndex) {
         return this.qm[itemIndex];
+    }
+
+    private double tier(int age){
+        double result = -1d;
+        if(age == 1)
+            result = 0.0;
+        else if(age == 18)
+            result = 0.0;
+        else if(age == 25)
+            result = 0.0;
+        else if(age == 35)
+            result = 0.5;
+        else if(age == 45)
+            result = 1.0;
+        else if(age == 50)
+            result = 1.0;
+        else if(age == 56)
+            result = 1.0;
+
+        return result;
     }
 
     @Override

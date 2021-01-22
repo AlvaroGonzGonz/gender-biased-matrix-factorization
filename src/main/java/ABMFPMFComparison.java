@@ -6,6 +6,7 @@ import es.upm.etsisi.cf4j.util.Range;
 import es.upm.etsisi.cf4j.util.plot.LinePlot;
 
 public class ABMFPMFComparison {
+    private static final int[] AGES = {1, 18, 25, 35, 45, 50, 56};
     private static final int[] NUM_FACTORS = Range.ofIntegers(2, 1, 14);
     private static final int NUM_ITERS = 500;
     private static final long RANDOM_SEED = 43L;
@@ -15,54 +16,29 @@ public class ABMFPMFComparison {
 
     public static void main(String[] args){
         try {
-            DataModel datamodel = DataModel.load("cml1M");
+            DataModel datamodel = DataModel.load("ml1M");
 
             LinePlot plot = new LinePlot(NUM_FACTORS, "Number of latent factors", "MAE");
 
-            //plot.addSeries("GeneralPMF");
-            plot.addSeries("YoungPMF");
-            plot.addSeries("OldPMF");
+
+            for (int age : AGES){
+                plot.addSeries("Age" + age);
+            }
 
             // Evaluate PMF Recommender
             for (int factors : NUM_FACTORS) {
                 Recommender pmf = new PMF(datamodel, factors, NUM_ITERS, 0.05, 0.0025, RANDOM_SEED);
                 pmf.fit();
 
-                QualityMeasure yamae = new AMAE(pmf, new double[]{0.0, 0.47});
-                QualityMeasure oamae = new AMAE(pmf, new double[]{0.47, 1.0});
-                //QualityMeasure gamae = new AMAE(pmf);
-
-                double youngScore = yamae.getScore();
-                plot.setValue("YoungPMF", factors, youngScore);
-
-                double oldScore = oamae.getScore();
-                plot.setValue("OldPMF", factors, oldScore);
-
-                //double generalScore = gamae.getScore();
-                //plot.setValue("GeneralPMF", factors, generalScore);
-            }
-
-            //plot.addSeries("GeneralABMF");
-            plot.addSeries("YoungABMF");
-            plot.addSeries("OldABMF");
-
-            // Evaluate ABMF Recommender
-            for (int factors : NUM_FACTORS) {
-                Recommender abmf = new GBMF(datamodel, factors, NUM_ITERS, 0.05, 0.0025, 0.0015, 0.003, RANDOM_SEED);
+                Recommender abmf = new ABMF(datamodel, factors, NUM_ITERS, 0.05, 0.0025, 0.0015, 0.003, RANDOM_SEED);
                 abmf.fit();
 
-                QualityMeasure yamae = new AMAE(abmf, new double[]{0.0, 0.47});
-                QualityMeasure oamae = new AMAE(abmf, new double[]{0.47, 1.0});
-                //QualityMeasure gamae = new AMAE(abmf);
+                for (int age: AGES){
+                    QualityMeasure pmfamae = new AMAE(pmf, age);
+                    QualityMeasure abmfamae = new AMAE(abmf, age);
 
-                double youngScore = yamae.getScore();
-                plot.setValue("YoungABMF", factors, youngScore);
-
-                double oldScore = oamae.getScore();
-                plot.setValue("OldABMF", factors, oldScore);
-
-                //double generalScore = gamae.getScore();
-                //plot.setValue("GeneralABMF", factors, generalScore);
+                    plot.setValue("Age" + age, factors, pmfamae.getScore() - abmfamae.getScore());
+                }
             }
 
             plot.printData("0", "0.0000");

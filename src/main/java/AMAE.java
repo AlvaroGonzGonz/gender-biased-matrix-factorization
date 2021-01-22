@@ -6,27 +6,22 @@ import java.util.Map;
 
 public class AMAE extends QualityMeasure {
 
-    private double[] gap;
+    private int age;
 
-    public AMAE(Recommender recommender){
+    public AMAE(Recommender recommender, int age) {
         super(recommender);
-        this.gap = new double[]{Double.NaN, Double.NaN};
-    }
-
-    public AMAE(Recommender recommender, double[] gap) {
-        super(recommender);
-        this.gap = gap;
+        this.age = age;
     }
 
     public AMAE(Recommender recommender, Map<String, Object> params) {
         this(recommender,
-                (double[]) params.get("age"));
+                (int) params.get("age"));
     }
 
     @Override
     public double getScore(TestUser testUser, double[] predictions) {
 
-        if (Double.isNaN(this.gap[0]) || (this.gap[0] <= testUser.getDataBank().getDouble("age") && testUser.getDataBank().getDouble("age") < this.gap[1])) {
+        if (this.age == testUser.getDataBank().getInt("age")) {
             double sum = 0d;
             int count = 0;
 

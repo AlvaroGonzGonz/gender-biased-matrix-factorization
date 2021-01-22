@@ -53,6 +53,7 @@ public class DABMF extends Recommender {
      * <ul>
      *   <li><b>numFactors</b>: int value with the number of latent factors.
      *   <li><b>numIters:</b>: int value with the number of iterations.
+     *   <li><b>Age:</b>: int value with the maximum age for young group.
      *   <li><b><em>gamma</em></b> (optional): double value with the learning rate hyper-parameter. If
      *       missing, it is set to 0.01.
      *   <li><b><em>etaf</em></b> (optional): double value with the learning rate hyper-parameter for
@@ -85,6 +86,7 @@ public class DABMF extends Recommender {
      * Model constructor
      *
      * @param datamodel DataModel instance
+     * @param age Maximum age from young group
      * @param numFactors Number of factors
      * @param numIters Number of iterations
      */
@@ -96,6 +98,7 @@ public class DABMF extends Recommender {
      * Model constructor
      *
      * @param datamodel DataModel instance
+     * @param age Maximum age from young group
      * @param numFactors Number of factors
      * @param numIters Number of iterations
      * @param seed Seed for random numbers generation
@@ -108,6 +111,7 @@ public class DABMF extends Recommender {
      * Model constructor
      *
      * @param datamodel DataModel instance
+     * @param age Maximum age from young group
      * @param numFactors Number of factors
      * @param numIters Number of iterations
      * @param lambda Regularization parameter
@@ -120,6 +124,7 @@ public class DABMF extends Recommender {
      * Model constructor
      *
      * @param datamodel DataModel instance
+     * @param age Maximum age from young group
      * @param numFactors Number of factors
      * @param numIters Number of iterations
      * @param lambda Regularization parameter
@@ -133,6 +138,7 @@ public class DABMF extends Recommender {
      * Model constructor
      *
      * @param datamodel DataModel instance
+     * @param age Maximum age from young group
      * @param numFactors Number of factors
      * @param numIters Number of iterations
      * @param lambda Regularization parameter
@@ -170,7 +176,6 @@ public class DABMF extends Recommender {
                 if (g == k && datamodel.getUser(k).getDataBank().getInt("age") <= this.age)
                     this.g[g][k] = 1.0;
                 else this.g[g][k] = 0.0;
-                System.out.println();
             }
         }
 
@@ -200,9 +205,9 @@ public class DABMF extends Recommender {
     }
 
     /**
-     * Get the number of factors of the model
+     * Get the maximum age from young group
      *
-     * @return Number of factors
+     * @return age
      */
     public int getAge() {
         return this.age;
