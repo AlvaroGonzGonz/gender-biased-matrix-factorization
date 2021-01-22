@@ -306,7 +306,7 @@ public class ABMF extends Recommender {
 
     @Override
     public String toString() {
-        return "GBMF("
+        return "ABMF("
                 + "numFactors="
                 + this.numFactors
                 + "; "

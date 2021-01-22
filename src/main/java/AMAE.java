@@ -26,7 +26,7 @@ public class AMAE extends QualityMeasure {
     @Override
     public double getScore(TestUser testUser, double[] predictions) {
 
-        if (Double.isNaN(this.gap[0]) || (this.gap[0] <= testUser.getDataBank().getDouble("age") && testUser.getDataBank().getDouble("age") <= this.gap[1])) {
+        if (Double.isNaN(this.gap[0]) || (this.gap[0] <= testUser.getDataBank().getDouble("age") && testUser.getDataBank().getDouble("age") < this.gap[1])) {
             double sum = 0d;
             int count = 0;
 

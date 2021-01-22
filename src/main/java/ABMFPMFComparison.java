@@ -15,7 +15,7 @@ public class ABMFPMFComparison {
 
     public static void main(String[] args){
         try {
-            DataModel datamodel = DataModel.load("gml1M");
+            DataModel datamodel = DataModel.load("cml1M");
 
             LinePlot plot = new LinePlot(NUM_FACTORS, "Number of latent factors", "MAE");
 
@@ -25,11 +25,11 @@ public class ABMFPMFComparison {
 
             // Evaluate PMF Recommender
             for (int factors : NUM_FACTORS) {
-                Recommender pmf = new PMF(datamodel, factors, NUM_ITERS, RANDOM_SEED);
+                Recommender pmf = new PMF(datamodel, factors, NUM_ITERS, 0.05, 0.0025, RANDOM_SEED);
                 pmf.fit();
 
-                QualityMeasure yamae = new AMAE(pmf, new double[]{0.0, 0.449});
-                QualityMeasure oamae = new AMAE(pmf, new double[]{0.45, 1.0});
+                QualityMeasure yamae = new AMAE(pmf, new double[]{0.0, 0.47});
+                QualityMeasure oamae = new AMAE(pmf, new double[]{0.47, 1.0});
                 //QualityMeasure gamae = new AMAE(pmf);
 
                 double youngScore = yamae.getScore();
@@ -42,17 +42,17 @@ public class ABMFPMFComparison {
                 //plot.setValue("GeneralPMF", factors, generalScore);
             }
 
-            //plot.addSeries("GeneralGBMF");
+            //plot.addSeries("GeneralABMF");
             plot.addSeries("YoungABMF");
             plot.addSeries("OldABMF");
 
-            // Evaluate GBMF Recommender
+            // Evaluate ABMF Recommender
             for (int factors : NUM_FACTORS) {
-                Recommender abmf = new GBMF(datamodel, factors, NUM_ITERS, RANDOM_SEED);
+                Recommender abmf = new GBMF(datamodel, factors, NUM_ITERS, 0.05, 0.0025, 0.0015, 0.003, RANDOM_SEED);
                 abmf.fit();
 
-                QualityMeasure yamae = new AMAE(abmf, new double[]{0.0, 0.449});
-                QualityMeasure oamae = new AMAE(abmf, new double[]{0.45, 1.0});
+                QualityMeasure yamae = new AMAE(abmf, new double[]{0.0, 0.47});
+                QualityMeasure oamae = new AMAE(abmf, new double[]{0.47, 1.0});
                 //QualityMeasure gamae = new AMAE(abmf);
 
                 double youngScore = yamae.getScore();
