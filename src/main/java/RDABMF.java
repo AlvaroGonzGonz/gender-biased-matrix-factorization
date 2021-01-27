@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Random;
 
 
-public class DABMF extends Recommender {
+public class RDABMF extends Recommender {
 
     protected static final double DEFAULT_GAMMA = 0.001;
     protected static final double DEFAULT_LAMBDA = 0.05;
@@ -29,9 +29,6 @@ public class DABMF extends Recommender {
 
     /** Learning rate */
     protected final double gamma;
-
-    /** Age parameter */
-    protected final int age;
 
     /** Learning rate for qf and qm*/
     protected final double etaf;
@@ -69,10 +66,9 @@ public class DABMF extends Recommender {
      * @param datamodel DataModel instance
      * @param params Model's hyper-parameters values
      */
-    public DABMF(DataModel datamodel, Map<String, Object> params) {
+    public RDABMF(DataModel datamodel, Map<String, Object> params) {
         this(
                 datamodel,
-                (int) params.get("age"),
                 (int) params.get("numFactors"),
                 (int) params.get("numIters"),
                 params.containsKey("lambda") ? (double) params.get("lambda") : DEFAULT_LAMBDA,
@@ -86,59 +82,54 @@ public class DABMF extends Recommender {
      * Model constructor
      *
      * @param datamodel DataModel instance
-     * @param age Maximum age from young group
      * @param numFactors Number of factors
      * @param numIters Number of iterations
      */
-    public DABMF(DataModel datamodel, int age, int numFactors, int numIters) {
-        this(datamodel, age, numFactors, numIters, DEFAULT_LAMBDA);
+    public RDABMF(DataModel datamodel, int numFactors, int numIters) {
+        this(datamodel, numFactors, numIters, DEFAULT_LAMBDA);
     }
 
     /**
      * Model constructor
      *
      * @param datamodel DataModel instance
-     * @param age Maximum age from young group
      * @param numFactors Number of factors
      * @param numIters Number of iterations
      * @param seed Seed for random numbers generation
      */
-    public DABMF(DataModel datamodel, int age, int numFactors, int numIters, long seed) {
-        this(datamodel, age, numFactors, numIters, DEFAULT_LAMBDA, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, seed);
+    public RDABMF(DataModel datamodel, int numFactors, int numIters, long seed) {
+        this(datamodel, numFactors, numIters, DEFAULT_LAMBDA, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, seed);
     }
 
     /**
      * Model constructor
      *
      * @param datamodel DataModel instance
-     * @param age Maximum age from young group
      * @param numFactors Number of factors
      * @param numIters Number of iterations
      * @param lambda Regularization parameter
      */
-    public DABMF(DataModel datamodel, int age, int numFactors, int numIters, double lambda) {
-        this(datamodel, age, numFactors, numIters, lambda, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, System.currentTimeMillis());
+    public RDABMF(DataModel datamodel, int numFactors, int numIters, double lambda) {
+        this(datamodel, numFactors, numIters, lambda, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, System.currentTimeMillis());
     }
 
     /**
      * Model constructor
      *
      * @param datamodel DataModel instance
-     * @param age Maximum age from young group
      * @param numFactors Number of factors
      * @param numIters Number of iterations
      * @param lambda Regularization parameter
      * @param seed Seed for random numbers generation
      */
-    public DABMF(DataModel datamodel, int age, int numFactors, int numIters, double lambda, long seed) {
-        this(datamodel, age, numFactors, numIters, lambda, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, seed);
+    public RDABMF(DataModel datamodel, int numFactors, int numIters, double lambda, long seed) {
+        this(datamodel, numFactors, numIters, lambda, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, seed);
     }
 
     /**
      * Model constructor
      *
      * @param datamodel DataModel instance
-     * @param age Maximum age from young group
      * @param numFactors Number of factors
      * @param numIters Number of iterations
      * @param lambda Regularization parameter
@@ -147,11 +138,10 @@ public class DABMF extends Recommender {
      * @param etam Learning rate parameter
      * @param seed Seed for random numbers generation
      */
-    public DABMF(
-            DataModel datamodel, int age, int numFactors, int numIters, double lambda, double gamma, double etaf, double etam, long seed) {
+    public RDABMF(
+            DataModel datamodel, int numFactors, int numIters, double lambda, double gamma, double etaf, double etam, long seed) {
         super(datamodel);
 
-        this.age = age;
         this.numFactors = numFactors;
         this.numIters = numIters;
         this.lambda = lambda;
@@ -173,8 +163,8 @@ public class DABMF extends Recommender {
         this.g = new double[datamodel.getNumberOfUsers()][datamodel.getNumberOfUsers()];
         for (int g = 0; g < datamodel.getNumberOfUsers(); g++){
             for (int k = 0; k < datamodel.getNumberOfUsers(); k++){
-                if (g == k && datamodel.getUser(k).getDataBank().getInt("age") <= this.age)
-                    this.g[g][k] = 1.0;
+                if (g == k)
+                    this.g[g][k] = datamodel.getUser(k).getDataBank().getInt("age");
                 else this.g[g][k] = 0.0;
             }
         }
@@ -202,15 +192,6 @@ public class DABMF extends Recommender {
      */
     public int getNumFactors() {
         return this.numFactors;
-    }
-
-    /**
-     * Get the maximum age from young group
-     *
-     * @return age
-     */
-    public int getAge() {
-        return this.age;
     }
 
     /**
@@ -326,10 +307,7 @@ public class DABMF extends Recommender {
 
     @Override
     public String toString() {
-        return "DABMF("
-                + "Age="
-                + this.age
-                + "; "
+        return "RDABMF("
                 + "numFactors="
                 + this.numFactors
                 + "; "
@@ -395,3 +373,4 @@ public class DABMF extends Recommender {
         public void afterRun() {}
     }
 }
+
