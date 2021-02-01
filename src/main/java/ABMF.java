@@ -288,7 +288,7 @@ public class ABMF extends Recommender {
 
         if(ntier == 1){
             if(age == 1)
-                result = 0.0;
+                result = 0.01;
             else if(age == 18)
                 result = 0.1667;
             else if(age == 25)
@@ -300,37 +300,37 @@ public class ABMF extends Recommender {
             else if(age == 50)
                 result = 0.8334;
             else if(age == 56)
-                result = 1.0;
+                result = 0.99;
         } else if (ntier == 2){
             if(age == 1)
-                result = 0.0;
+                result = 0.01;
             else if(age == 18)
-                result = 0.0;
+                result = 0.01;
             else if(age == 25)
-                result = 0.25;
-            else if(age == 35)
                 result = 0.5;
+            else if(age == 35)
+                result = 0.99;
             else if(age == 45)
-                result = 0.75;
+                result = 0.99;
             else if(age == 50)
-                result = 1.0;
+                result = 0.99;
             else if(age == 56)
-                result = 1.0;
+                result = 0.99;
         } else if (ntier == 3){
             if(age == 1)
-                result = 0.0;
+                result = 0.01;
             else if(age == 18)
-                result = 0.0;
+                result = 0.01;
             else if(age == 25)
-                result = 0.0;
+                result = 0.33;
             else if(age == 35)
-                result = 0.5;
+                result = 0.66;
             else if(age == 45)
-                result = 1.0;
+                result = 0.99;
             else if(age == 50)
-                result = 1.0;
+                result = 0.99;
             else if(age == 56)
-                result = 1.0;
+                result = 0.99;
         }
 
         return result;
