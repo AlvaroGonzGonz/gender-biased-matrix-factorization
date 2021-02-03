@@ -72,9 +72,9 @@ public class DABMF extends Recommender {
     public DABMF(DataModel datamodel, Map<String, Object> params) {
         this(
                 datamodel,
+                (int) params.get("age"),
                 (int) params.get("numFactors"),
                 (int) params.get("numIters"),
-                (int) params.get("age"),
                 params.containsKey("lambda") ? (double) params.get("lambda") : DEFAULT_LAMBDA,
                 params.containsKey("gamma") ? (double) params.get("gamma") : DEFAULT_GAMMA,
                 params.containsKey("etaf") ? (double) params.get("etaf") : DEFAULT_GAMMA,

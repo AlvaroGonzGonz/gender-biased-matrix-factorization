@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Random;
 
 
-public class ABMF extends Recommender {
+public class RDABMF extends Recommender {
 
     protected static final double DEFAULT_GAMMA = 0.001;
     protected static final double DEFAULT_LAMBDA = 0.05;
@@ -30,7 +30,7 @@ public class ABMF extends Recommender {
     /** Learning rate */
     protected final double gamma;
 
-    /** Learning rate for feminine and masculine*/
+    /** Learning rate for qf and qm*/
     protected final double etaf;
     protected final double etam;
 
@@ -43,9 +43,6 @@ public class ABMF extends Recommender {
     /** Number of iterations */
     protected final int numIters;
 
-    /** Tier number */
-    protected final int nTier;
-
     /**
      * Model constructor from a Map containing the model's hyper-parameters values. Map object must
      * contains the following keys:
@@ -53,6 +50,7 @@ public class ABMF extends Recommender {
      * <ul>
      *   <li><b>numFactors</b>: int value with the number of latent factors.
      *   <li><b>numIters:</b>: int value with the number of iterations.
+     *   <li><b>Age:</b>: int value with the maximum age for young group.
      *   <li><b><em>gamma</em></b> (optional): double value with the learning rate hyper-parameter. If
      *       missing, it is set to 0.01.
      *   <li><b><em>etaf</em></b> (optional): double value with the learning rate hyper-parameter for
@@ -68,10 +66,9 @@ public class ABMF extends Recommender {
      * @param datamodel DataModel instance
      * @param params Model's hyper-parameters values
      */
-    public ABMF(DataModel datamodel, Map<String, Object> params) {
+    public RDABMF(DataModel datamodel, Map<String, Object> params) {
         this(
                 datamodel,
-                (int) params.get("nTier"),
                 (int) params.get("numFactors"),
                 (int) params.get("numIters"),
                 params.containsKey("lambda") ? (double) params.get("lambda") : DEFAULT_LAMBDA,
@@ -88,8 +85,8 @@ public class ABMF extends Recommender {
      * @param numFactors Number of factors
      * @param numIters Number of iterations
      */
-    public ABMF(DataModel datamodel, int nTier, int numFactors, int numIters) {
-        this(datamodel, nTier, numFactors, numIters, DEFAULT_LAMBDA);
+    public RDABMF(DataModel datamodel, int numFactors, int numIters) {
+        this(datamodel, numFactors, numIters, DEFAULT_LAMBDA);
     }
 
     /**
@@ -100,8 +97,8 @@ public class ABMF extends Recommender {
      * @param numIters Number of iterations
      * @param seed Seed for random numbers generation
      */
-    public ABMF(DataModel datamodel, int nTier, int numFactors, int numIters, long seed) {
-        this(datamodel, nTier, numFactors, numIters, DEFAULT_LAMBDA, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, seed);
+    public RDABMF(DataModel datamodel, int numFactors, int numIters, long seed) {
+        this(datamodel, numFactors, numIters, DEFAULT_LAMBDA, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, seed);
     }
 
     /**
@@ -112,8 +109,8 @@ public class ABMF extends Recommender {
      * @param numIters Number of iterations
      * @param lambda Regularization parameter
      */
-    public ABMF(DataModel datamodel, int nTier, int numFactors, int numIters, double lambda) {
-        this(datamodel, nTier, numFactors, numIters, lambda, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, System.currentTimeMillis());
+    public RDABMF(DataModel datamodel, int numFactors, int numIters, double lambda) {
+        this(datamodel, numFactors, numIters, lambda, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, System.currentTimeMillis());
     }
 
     /**
@@ -125,8 +122,8 @@ public class ABMF extends Recommender {
      * @param lambda Regularization parameter
      * @param seed Seed for random numbers generation
      */
-    public ABMF(DataModel datamodel, int nTier, int numFactors, int numIters, double lambda, long seed) {
-        this(datamodel, nTier, numFactors, numIters, lambda, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, seed);
+    public RDABMF(DataModel datamodel, int numFactors, int numIters, double lambda, long seed) {
+        this(datamodel, numFactors, numIters, lambda, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, seed);
     }
 
     /**
@@ -141,8 +138,8 @@ public class ABMF extends Recommender {
      * @param etam Learning rate parameter
      * @param seed Seed for random numbers generation
      */
-    public ABMF(
-            DataModel datamodel, int nTier, int numFactors, int numIters, double lambda, double gamma, double etaf, double etam, long seed) {
+    public RDABMF(
+            DataModel datamodel, int numFactors, int numIters, double lambda, double gamma, double etaf, double etam, long seed) {
         super(datamodel);
 
         this.numFactors = numFactors;
@@ -151,7 +148,6 @@ public class ABMF extends Recommender {
         this.gamma = gamma;
         this.etaf = etaf;
         this.etam = etam;
-        this.nTier = nTier;
 
         Random rand = new Random(seed);
 
@@ -167,8 +163,8 @@ public class ABMF extends Recommender {
         this.g = new double[datamodel.getNumberOfUsers()][datamodel.getNumberOfUsers()];
         for (int g = 0; g < datamodel.getNumberOfUsers(); g++){
             for (int k = 0; k < datamodel.getNumberOfUsers(); k++){
-                if (g == k && this.tier(this.nTier, datamodel.getUser(k).getDataBank().getInt("age")) != -1)
-                    this.g[g][k] = 1.0 - this.tier(this.nTier, datamodel.getUser(k).getDataBank().getInt("age"));
+                if (g == k)
+                    this.g[g][k] = datamodel.getUser(k).getDataBank().getInt("age");
                 else this.g[g][k] = 0.0;
             }
         }
@@ -283,59 +279,6 @@ public class ABMF extends Recommender {
         return this.qm[itemIndex];
     }
 
-    private double tier(int ntier, int age){
-        double result = -1d;
-
-        if(ntier == 1){
-            if(age == 1)
-                result = 0.01;
-            else if(age == 18)
-                result = 0.1667;
-            else if(age == 25)
-                result = 0.3334;
-            else if(age == 35)
-                result = 0.5;
-            else if(age == 45)
-                result = 0.6668;
-            else if(age == 50)
-                result = 0.8334;
-            else if(age == 56)
-                result = 0.99;
-        } else if (ntier == 2){
-            if(age == 1)
-                result = 0.01;
-            else if(age == 18)
-                result = 0.01;
-            else if(age == 25)
-                result = 0.5;
-            else if(age == 35)
-                result = 0.99;
-            else if(age == 45)
-                result = 0.99;
-            else if(age == 50)
-                result = 0.99;
-            else if(age == 56)
-                result = 0.99;
-        } else if (ntier == 3){
-            if(age == 1)
-                result = 0.01;
-            else if(age == 18)
-                result = 0.01;
-            else if(age == 25)
-                result = 0.33;
-            else if(age == 35)
-                result = 0.66;
-            else if(age == 45)
-                result = 0.99;
-            else if(age == 50)
-                result = 0.99;
-            else if(age == 56)
-                result = 0.99;
-        }
-
-        return result;
-    }
-
     @Override
     public void fit() {
         System.out.println("\nFitting " + this.toString());
@@ -364,10 +307,7 @@ public class ABMF extends Recommender {
 
     @Override
     public String toString() {
-        return "ABMF("
-                + "Tier="
-                + this.nTier
-                + "; "
+        return "RDABMF("
                 + "numFactors="
                 + this.numFactors
                 + "; "
@@ -433,3 +373,4 @@ public class ABMF extends Recommender {
         public void afterRun() {}
     }
 }
+
