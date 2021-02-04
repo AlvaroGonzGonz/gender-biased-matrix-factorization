@@ -21,7 +21,7 @@ public class AMAE extends QualityMeasure {
     @Override
     public double getScore(TestUser testUser, double[] predictions) {
 
-        if (this.age == testUser.getDataBank().getInt("age")) {
+        if (this.age == testUser.getDataBank().getInt("age") || this.age == 0) {
             double sum = 0d;
             int count = 0;
 
