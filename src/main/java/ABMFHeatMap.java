@@ -4,7 +4,9 @@ import es.upm.etsisi.cf4j.recommender.Recommender;
 import es.upm.etsisi.cf4j.util.Range;
 import org.tc33.jheatchart.HeatChart;
 
+import java.awt.*;
 import java.io.File;
+import java.util.Arrays;
 
 public class ABMFHeatMap {
     private static final int[] AGES = {1, 18, 25, 35, 45, 50, 56};
@@ -38,13 +40,52 @@ public class ABMFHeatMap {
             }
 
             for (int i=0; i<AGES.length; i++){
+
+                //Heat Map image
                 HeatChart map = new HeatChart(heatMaps[i]);
 
                 map.setTitle("Heat Map for Age " + AGES[i]);
-                map.setXAxisLabel("C1");
-                map.setYAxisLabel("C2");
 
-                map.saveToFile(new File("HeatMapAge" + AGES[i] + ".png"));
+                map.setXAxisLabel("C2");
+                map.setXValues(C2[0], C2[1]-C2[0]);
+                map.setYAxisLabel("C1");
+                map.setYValues(C1[0], C1[1]-C1[0]);
+
+                map.setHighValueColour(new Color(255, 0 ,0));
+                map.setLowValueColour(new Color(0, 0, 255));
+
+                map.saveToFile(new File("Graphics/HeatMaps/HeatMapAge" + AGES[i] + ".png"));
+
+                //Gradient image
+                double[][] gradient = getGradient(heatMaps[i]);
+
+                map = new HeatChart(gradient);
+
+                map.setTitle("Gradient for Age" + AGES[i]);
+
+                map.setYAxisLabel("Values");
+                map.setYValues(gradient[0][0], gradient[gradient.length-1][0]);
+
+                map.setHighValueColour(new Color(255, 0 ,0));
+                map.setLowValueColour(new Color(0, 0, 255));
+
+                map.saveToFile(new File("Graphics/HeatMaps/HeatMapAge" + AGES[i] + "Gradient.png"));
+            }
+
+            for (int i=0; i<AGES.length; i++) {
+                double error = Double.MAX_VALUE;
+                double c1 = 0d, c2 = 0d;
+                for(int j=0; j<heatMaps[0].length; j++) {
+                    for (int k=0; k < heatMaps[0][0].length; k++) {
+                        if(heatMaps[i][j][k] < error){
+                            error = heatMaps[i][j][k];
+                            c1 = C1[j];
+                            c2 = C2[k];
+                        }
+                    }
+                }
+
+                System.out.print("\nPara Edad " + AGES[i] + " el menor error es: " + error + " con C1 = " + c1 + " y C2 = " + c2);
             }
 
         }
@@ -52,5 +93,33 @@ public class ABMFHeatMap {
             e.printStackTrace();
         }
 
+    }
+
+    private static double[][] getGradient(double[][] matrix){
+
+        Double[] matrix2array = new Double[matrix.length* matrix[0].length];
+        for(int i=0; i< matrix.length; i++){
+            for(int j=0; j<matrix[0].length; j++){
+                matrix2array[i*matrix[0].length+j] = matrix[i][j];
+            }
+        }
+
+        Object[] unique = Arrays.stream(matrix2array).distinct().sorted().toArray();
+        double[] array = new double[unique.length];
+
+        for(int i=0; i< unique.length; i++)
+            array[i] = Double.parseDouble(unique[i].toString());
+
+        double[][] gradient = new double[30][1];
+
+        int count = 0;
+        for(int i=0; i< array.length; i++){
+            if((i+1)%19 == 0) {
+                gradient[count][0] = array[i];
+                count++;
+            }
+        }
+
+        return gradient;
     }
 }
