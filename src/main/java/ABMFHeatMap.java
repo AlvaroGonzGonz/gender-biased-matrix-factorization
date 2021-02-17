@@ -29,7 +29,7 @@ public class ABMFHeatMap {
 
             for (int j = 0; j<C1.length; j++){
                 for (int k = 0; k<C2.length; k++) {
-                    Recommender abmf = new ABMF(datamodel, FACTORS, NUM_ITERS, DEFAULT_LAMBDA, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, C1[j], C2[k], RANDOM_SEED);
+                    Recommender abmf = new ABMF(datamodel, FACTORS, NUM_ITERS, DEFAULT_LAMBDA, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, C1[j], C2[k], 0, RANDOM_SEED);
                     abmf.fit();
 
                     for (int i = 0; i<AGES.length; i++) {

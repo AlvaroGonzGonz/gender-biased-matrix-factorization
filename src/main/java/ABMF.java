@@ -14,6 +14,7 @@ public class ABMF extends Recommender {
 
     protected static final double DEFAULT_GAMMA = 0.001;
     protected static final double DEFAULT_LAMBDA = 0.05;
+    protected static final double DEFAULT_ALPHA = 0;
 
     protected static final double DEFAULT_C1 = 0.01;
     protected static final double DEFAULT_C2 = 0.01;
@@ -25,17 +26,17 @@ public class ABMF extends Recommender {
     protected final double[][] s_u;
 
     /** Female Item factors */
-    protected final double[][] qf;
+    protected final double[][] qy;
 
     /** Male Item factors */
-    protected final double[][] qm;
+    protected final double[][] qo;
 
     /** Learning rate */
     protected final double gamma;
 
     /** Learning rate for feminine and masculine*/
-    protected final double etaf;
-    protected final double etam;
+    protected final double etay;
+    protected final double etao;
 
     /** Regularization parameter */
     protected final double lambda;
@@ -49,6 +50,9 @@ public class ABMF extends Recommender {
     /** Sigmoid parameters */
     protected final double c1;
     protected final double c2;
+
+    /** Age parameter */
+    protected final double alpha;
 
     /**
      * Model constructor from a Map containing the model's hyper-parameters values. Map object must
@@ -83,6 +87,7 @@ public class ABMF extends Recommender {
                 params.containsKey("etam") ? (double) params.get("etam") : DEFAULT_GAMMA,
                 params.containsKey("c1") ? (double) params.get("c1") : DEFAULT_C1,
                 params.containsKey("c2") ? (double) params.get("c2") : DEFAULT_C2,
+                params.containsKey("alpha") ? (double) params.get("alpha") : DEFAULT_ALPHA,
                 params.containsKey("seed") ? (long) params.get("seed") : System.currentTimeMillis());
     }
 
@@ -106,7 +111,7 @@ public class ABMF extends Recommender {
      * @param seed Seed for random numbers generation
      */
     public ABMF(DataModel datamodel, int numFactors, int numIters, long seed) {
-        this(datamodel, numFactors, numIters, DEFAULT_LAMBDA, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_C1, DEFAULT_C2, seed);
+        this(datamodel, numFactors, numIters, DEFAULT_LAMBDA, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_C1, DEFAULT_C2, DEFAULT_ALPHA, seed);
     }
 
     /**
@@ -118,7 +123,7 @@ public class ABMF extends Recommender {
      * @param lambda Regularization parameter
      */
     public ABMF(DataModel datamodel, int numFactors, int numIters, double lambda) {
-        this(datamodel, numFactors, numIters, lambda, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_C1, DEFAULT_C2, System.currentTimeMillis());
+        this(datamodel, numFactors, numIters, lambda, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_C1, DEFAULT_C2, DEFAULT_ALPHA, System.currentTimeMillis());
     }
 
     /**
@@ -131,7 +136,7 @@ public class ABMF extends Recommender {
      * @param seed Seed for random numbers generation
      */
     public ABMF(DataModel datamodel, int numFactors, int numIters, double lambda, long seed) {
-        this(datamodel, numFactors, numIters, lambda, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_C1, DEFAULT_C2, seed);
+        this(datamodel, numFactors, numIters, lambda, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_C1, DEFAULT_C2, DEFAULT_ALPHA, seed);
     }
 
     /**
@@ -147,17 +152,18 @@ public class ABMF extends Recommender {
      * @param seed Seed for random numbers generation
      */
     public ABMF(
-            DataModel datamodel, int numFactors, int numIters, double lambda, double gamma, double etaf, double etam, double c1, double c2, long seed) {
+            DataModel datamodel, int numFactors, int numIters, double lambda, double gamma, double etaf, double etam, double c1, double c2, double alpha, long seed) {
         super(datamodel);
 
         this.numFactors = numFactors;
         this.numIters = numIters;
         this.lambda = lambda;
         this.gamma = gamma;
-        this.etaf = etaf;
-        this.etam = etam;
+        this.etay = etaf;
+        this.etao = etam;
         this.c1 = c1;
         this.c2 = c2;
+        this.alpha = alpha;
 
         Random rand = new Random(seed);
 
@@ -174,23 +180,23 @@ public class ABMF extends Recommender {
         for (int g = 0; g < datamodel.getNumberOfUsers(); g++){
             for (int k = 0; k < datamodel.getNumberOfUsers(); k++){
                 if (g == k)
-                    this.s_u[g][k] = 1.0 /( 1 + Math.exp( - this.c1 * (datamodel.getUser(k).getDataBank().getDouble("NormalizedAge") - this.c2)));
+                    this.s_u[g][k] = 1.0 - (1.0 /( 1 + Math.exp( - this.c1 * (datamodel.getUser(k).getDataBank().getDouble("NormalizedAge") - this.c2))));
                 else this.s_u[g][k] = 0.0;
             }
         }
 
         // Items initialization
-        this.qf = new double[datamodel.getNumberOfItems()][numFactors];
+        this.qy = new double[datamodel.getNumberOfItems()][numFactors];
         for (int i = 0; i < datamodel.getNumberOfItems(); i++) {
             for (int k = 0; k < numFactors; k++) {
-                this.qf[i][k] = rand.nextDouble() * 2 - 1;
+                this.qy[i][k] = rand.nextDouble() * 2 - 1;
             }
         }
 
-        this.qm = new double[datamodel.getNumberOfItems()][numFactors];
+        this.qo = new double[datamodel.getNumberOfItems()][numFactors];
         for (int i = 0; i < datamodel.getNumberOfItems(); i++) {
             for (int k = 0; k < numFactors; k++) {
-                this.qm[i][k] = rand.nextDouble() * 2 - 1;
+                this.qo[i][k] = rand.nextDouble() * 2 - 1;
             }
         }
     }
@@ -236,8 +242,8 @@ public class ABMF extends Recommender {
      *
      * @return Etaf
      */
-    public double getEtaf() {
-        return this.etaf;
+    public double getEtay() {
+        return this.etay;
     }
 
     /**
@@ -245,8 +251,8 @@ public class ABMF extends Recommender {
      *
      * @return Etam
      */
-    public double getEtam() {
-        return this.etam;
+    public double getEtao() {
+        return this.etao;
     }
 
     /**
@@ -276,7 +282,7 @@ public class ABMF extends Recommender {
      * @return Latent factors vector
      */
     public double[] getFemaleItemFactors(int itemIndex) {
-        return this.qf[itemIndex];
+        return this.qy[itemIndex];
     }
 
     /**
@@ -286,7 +292,7 @@ public class ABMF extends Recommender {
      * @return Latent factors vector
      */
     public double[] getMaleItemFactors(int itemIndex) {
-        return this.qm[itemIndex];
+        return this.qo[itemIndex];
     }
 
     @Override
@@ -306,10 +312,12 @@ public class ABMF extends Recommender {
     public double predict(int userIndex, int itemIndex) {
         double result = 0;
 
+        double wy = Math.pow(s_u[userIndex][userIndex], alpha);
+        double wo = Math.pow(1.0 - s_u[userIndex][userIndex], alpha);
+
         for (int k=0; k < this.getNumFactors(); k++){
             result += this.p[userIndex][k]
-                    * (this.s_u[userIndex][userIndex] * this.qf[itemIndex][k]
-                    + (1.0 - this.s_u[userIndex][userIndex]) * this.qm[itemIndex][k]);
+                    * ((wy * qy[itemIndex][k] + wo * qo[itemIndex][k])/(wy + wo));
         }
 
         return result;
@@ -331,16 +339,19 @@ public class ABMF extends Recommender {
                 + this.lambda
                 + "; "
                 + "etaf="
-                + this.etaf
+                + this.etay
                 + "; "
                 + "etam="
-                + this.etam
+                + this.etao
                 + "; "
                 + "c1="
                 + this.c1
                 + "; "
                 + "c2="
                 + this.c2
+                + "; "
+                + "alpha="
+                + this.alpha
                 + ")";
     }
 
@@ -356,8 +367,10 @@ public class ABMF extends Recommender {
             for (int pos = 0; pos < user.getNumberOfRatings(); pos++) {
                 int itemIndex = user.getItemAt(pos);
                 double error = user.getRatingAt(pos) - predict(userIndex, itemIndex);
+                double wy = Math.pow(s_u[userIndex][userIndex], alpha);
+                double wo = Math.pow(1.0 - s_u[userIndex][userIndex], alpha);
                 for (int k = 0; k < numFactors; k++) {
-                    p[userIndex][k] += gamma * (error * ((s_u[userIndex][userIndex] * qf[itemIndex][k]) + ((1.0 - s_u[userIndex][userIndex]) * qm[itemIndex][k])) - lambda * p[userIndex][k]);
+                    p[userIndex][k] += gamma * (((wy * qy[itemIndex][k] + wo * qo[itemIndex][k])/(wy + wo)) * error - lambda * p[userIndex][k]);
                 }
             }
         }
@@ -378,9 +391,11 @@ public class ABMF extends Recommender {
             for (int pos = 0; pos < item.getNumberOfRatings(); pos++) {
                 int userIndex = item.getUserAt(pos);
                 double error = item.getRatingAt(pos) - predict(userIndex, itemIndex);
+                double wy = Math.pow(s_u[userIndex][userIndex], alpha);
+                double wo = Math.pow(1.0 - s_u[userIndex][userIndex], alpha);
                 for (int k = 0; k < numFactors; k++) {
-                    qf[itemIndex][k] += etaf * (error * s_u[userIndex][userIndex] * p[userIndex][k] - lambda * qf[itemIndex][k]);
-                    qm[itemIndex][k] += etam * (error * (1.0 - s_u[userIndex][userIndex]) * p[userIndex][k] - lambda * qm[itemIndex][k]);
+                    qy[itemIndex][k] += etay * (error * (wy/(wy + wo)) * p[userIndex][k] - lambda * qy[itemIndex][k]);
+                    qo[itemIndex][k] += etao * (error * (wo/(wy + wo)) * p[userIndex][k] - lambda * qo[itemIndex][k]);
                 }
             }
         }
