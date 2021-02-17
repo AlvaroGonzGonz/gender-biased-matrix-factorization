@@ -2,7 +2,7 @@ import es.upm.etsisi.cf4j.data.DataModel;
 import es.upm.etsisi.cf4j.qualityMeasure.QualityMeasure;
 import es.upm.etsisi.cf4j.recommender.Recommender;
 import es.upm.etsisi.cf4j.util.Range;
-import org.tc33.jheatchart.HeatChart;
+import org.tc33.jheatchart.*;
 
 import java.awt.*;
 import java.io.File;
