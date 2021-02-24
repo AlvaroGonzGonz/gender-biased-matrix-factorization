@@ -180,7 +180,7 @@ public class ABMF extends Recommender {
         for (int g = 0; g < datamodel.getNumberOfUsers(); g++){
             for (int k = 0; k < datamodel.getNumberOfUsers(); k++){
                 if (g == k)
-                    this.s_u[g][k] = 1.0 - (1.0 /( 1 + Math.exp( - this.c1 * (datamodel.getUser(k).getDataBank().getDouble("NormalizedAge") - this.c2))));
+                    this.s_u[g][k] = 2.0 * ( 1.0 - (1.0 /( 1 + Math.exp( - this.c1 * (datamodel.getUser(k).getDataBank().getDouble("NormalizedAge") - this.c2)))));
                 else this.s_u[g][k] = 0.0;
             }
         }
