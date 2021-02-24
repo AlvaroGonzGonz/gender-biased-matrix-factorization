@@ -7,8 +7,8 @@ import es.upm.etsisi.cf4j.util.Range;
 import es.upm.etsisi.cf4j.util.plot.LinePlot;
 
 public class ABMFPMFComparison {
-    //private static final int[] AGES = {1, 18, 25, 35, 45, 50, 56};
-    private static final double[] ALPHA_VALUES = Range.ofDoubles(0.0, 0.1, 101);
+    private static final int[] AGES = {1, 18, 25, 35, 45, 50, 56};
+    private static final double[] ALPHA_VALUES = Range.ofDoubles(0.0, 0.2, 51);
     private static final int FACTORS = 10;
     private static final int NUM_ITERS = 300;
     private static final long RANDOM_SEED = 43L;
@@ -20,29 +20,34 @@ public class ABMFPMFComparison {
         try {
             DataModel datamodel = DataModel.load("ml1M");
 
-            LinePlot plot = new LinePlot(ALPHA_VALUES, "Alpha", "MAE");
+            for (int age: AGES) {
+                LinePlot plot = new LinePlot(ALPHA_VALUES, "Alpha", "MAE");
 
-            plot.addSeries("PMF");
-            plot.addSeries("ABMF");
+                plot.addSeries("PMFGeneral");
+                plot.addSeries("PMF" + age);
+                plot.addSeries("ABMF" + age);
 
-            for (double alpha : ALPHA_VALUES) {
+                for (double alpha : ALPHA_VALUES) {
 
-                Recommender pmf = new PMF(datamodel, FACTORS, NUM_ITERS, RANDOM_SEED);
-                pmf.fit();
+                    Recommender pmf = new PMF(datamodel, FACTORS, NUM_ITERS, RANDOM_SEED);
+                    pmf.fit();
 
-                QualityMeasure pmfmae = new MAE(pmf);
-                plot.setValue("PMF", alpha, pmfmae.getScore());
+                    QualityMeasure pmfmae = new MAE(pmf);
+                    plot.setValue("PMFGeneral", alpha, pmfmae.getScore());
 
-                Recommender abmf = new ABMF(datamodel, FACTORS, NUM_ITERS, ABMF.DEFAULT_LAMBDA, ABMF.DEFAULT_GAMMA, ABMF.DEFAULT_GAMMA, ABMF.DEFAULT_GAMMA, 1.0, 0.5, alpha,RANDOM_SEED);
-                abmf.fit();
+                    QualityMeasure pmfdamae = new AMAE(pmf, age);
+                    plot.setValue("PMF" + age, alpha, pmfdamae.getScore());
 
-                QualityMeasure abmfmae = new MAE(abmf);
+                    Recommender abmf = new ABMF(datamodel, FACTORS, NUM_ITERS, ABMF.DEFAULT_LAMBDA, ABMF.DEFAULT_GAMMA, ABMF.DEFAULT_GAMMA, ABMF.DEFAULT_GAMMA, 1.0, 0.5, alpha, RANDOM_SEED);
+                    abmf.fit();
 
-                plot.setValue("ABMF", alpha, abmfmae.getScore());
+                    QualityMeasure abmfdamae = new AMAE(abmf, age);
+                    plot.setValue("ABMF" + age, alpha, abmfdamae.getScore());
+                }
+
+                //plot.printData("0", "0.0000");
+                plot.draw();
             }
-
-            //plot.printData("0", "0.0000");
-            plot.draw();
         }
         catch(Exception e) {
             e.printStackTrace();
