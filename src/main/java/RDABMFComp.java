@@ -1,6 +1,5 @@
 import es.upm.etsisi.cf4j.data.DataModel;
 import es.upm.etsisi.cf4j.data.User;
-import es.upm.etsisi.cf4j.qualityMeasure.prediction.MAE;
 import es.upm.etsisi.cf4j.recommender.Recommender;
 import es.upm.etsisi.cf4j.recommender.matrixFactorization.PMF;
 import es.upm.etsisi.cf4j.qualityMeasure.QualityMeasure;
@@ -38,8 +37,8 @@ public class RDABMFComp {
             LinePlot plot = new LinePlot(XAXIS, "Percent of users", "MAE");
 
             plot.addSeries("Error General");
-            plot.addSeries("G1");
-            plot.addSeries("G2");
+            plot.addSeries("Gm");
+            plot.addSeries("GM");
 
             for (double naxis : XAXIS){
 
@@ -81,10 +80,10 @@ public class RDABMFComp {
                 plot.setValue("Error General", naxis, pmfScore);
 
                 double g1Score = g1.getScore();
-                plot.setValue("G1", naxis, g1Score);
+                plot.setValue("Gm", naxis, g1Score);
 
                 double g2Score = g2.getScore();
-                plot.setValue("G2", naxis, g2Score);
+                plot.setValue("GM", naxis, g2Score);
             }
 
             plot.printData("0", "0.0000");
