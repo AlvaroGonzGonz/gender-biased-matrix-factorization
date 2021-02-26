@@ -1,41 +1,44 @@
 import es.upm.etsisi.cf4j.data.DataModel;
 import es.upm.etsisi.cf4j.data.User;
+import es.upm.etsisi.cf4j.qualityMeasure.QualityMeasure;
+import es.upm.etsisi.cf4j.recommender.Recommender;
+import es.upm.etsisi.cf4j.recommender.matrixFactorization.PMF;
+import es.upm.etsisi.cf4j.util.Range;
+import es.upm.etsisi.cf4j.util.plot.LinePlot;
 
 public class GroupBalancing {
+    private static final int[] AGES = {1, 18, 25, 35, 45, 50, 56};
+    private static final int[] NUM_FACTORS = Range.ofIntegers(2, 1, 14);
+    private static final int NUM_ITERS = 500;
+    private static final long RANDOM_SEED = 43L;
 
     public GroupBalancing(){
     }
 
     public static void main (String[] args){
         try{
-            DataModel datamodel = DataModel.load("ml1M");
+            DataModel datamodel = DataModel.load("ml-1m-subsampling");
 
-            int age1=0, age18=0, age25=0, age35=0, age45=0, age50=0, age56=0;
+            LinePlot plot = new LinePlot(NUM_FACTORS, "Number of factors", "MAE");
 
-            for (User user : datamodel.getUsers()){
-                if(user.getDataBank().getInt("age") == 1)
-                    age1++;
-                else if(user.getDataBank().getInt("age") == 18)
-                    age18++;
-                else if(user.getDataBank().getInt("age") == 25)
-                    age25++;
-                else if(user.getDataBank().getInt("age") == 35)
-                    age35++;
-                else if(user.getDataBank().getInt("age") == 45)
-                    age45++;
-                else if(user.getDataBank().getInt("age") == 50)
-                    age50++;
-                else if(user.getDataBank().getInt("age") == 56)
-                    age56++;
+            for( int age : AGES){
+                plot.addSeries("Age" + age);
             }
 
-            System.out.println("El número de usuarios con edad 1 es: " + age1);
-            System.out.println("El número de usuarios con edad 18 es: " + age18);
-            System.out.println("El número de usuarios con edad 25 es: " + age25);
-            System.out.println("El número de usuarios con edad 35 es: " + age35);
-            System.out.println("El número de usuarios con edad 45 es: " + age45);
-            System.out.println("El número de usuarios con edad 50 es: " + age50);
-            System.out.println("El número de usuarios con edad 56 es: " + age56);
+            for (int FACTORS : NUM_FACTORS){
+                Recommender pmf = new PMF(datamodel, FACTORS, NUM_ITERS, 0.045, 0.01, RANDOM_SEED);
+                pmf.fit();
+
+                for( int age : AGES){
+                    QualityMeasure pmfamae = new AMAE(pmf, age);
+                    plot.setValue("Age" + age, FACTORS, pmfamae.getScore());
+                }
+
+            }
+
+            plot.printData("0", "0.0000");
+            plot.draw();
+
         }
         catch(Exception e) {
             e.printStackTrace();
