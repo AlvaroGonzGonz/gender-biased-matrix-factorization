@@ -31,11 +31,14 @@ public class VisualAnalysis {
 
             for (User user : datamodel.getUsers()){
                 double[] array = pmf.getUserFactors(user.getUserIndex());
-                String[] linea = new String[FACTORS];
+                String[] linea = new String[FACTORS+2];
+                linea[0] = user.getDataBank().getDouble("gender") == 1.0? "M" : "F";
+                linea[1] = String.valueOf(user.getDataBank().getInt("age"));
                 for (int i=0; i<FACTORS; i++){
-                    linea[i] = String.valueOf(array[i]);
+                    linea[i+2] = String.valueOf(array[i]);
                 }
-                pw.println(String.join("::", linea));
+                linea[linea.length-1] = linea[linea.length-1] + "::";
+                pw.print(String.join("::", linea));
             }
         }
         catch(Exception e) {
