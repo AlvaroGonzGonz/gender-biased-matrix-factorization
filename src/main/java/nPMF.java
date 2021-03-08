@@ -250,9 +250,8 @@ public class nPMF extends Recommender {
         @Override
         public void run(User user) {
             int userIndex = user.getUserIndex();
-            double modifier = (double) Math.abs(datamodel.getUser(userIndex).getDataBank().getInt("age") - datamodel.getUser(userIndex).getDataBank().getDouble("MeanAge"));
-            /*if(user.getDataBank().getDouble("MeanAge") != 34.64975165562914)
-                System.out.println("USER" + modifier);*/
+            double modifier = 1.0;//user.getDataBank().getDouble("AgeFairness");
+            //System.out.println("USER" + modifier);
             for (int pos = 0; pos < user.getNumberOfRatings(); pos++) {
                 int itemIndex = user.getItemAt(pos);
                 double error = modifier * (user.getRatingAt(pos) - predict(userIndex, itemIndex));
@@ -277,7 +276,7 @@ public class nPMF extends Recommender {
             int itemIndex = item.getItemIndex();
             for (int pos = 0; pos < item.getNumberOfRatings(); pos++) {
                 int userIndex = item.getUserAt(pos);
-                double modifier = Math.abs(datamodel.getUser(userIndex).getDataBank().getInt("age") - datamodel.getUser(userIndex).getDataBank().getDouble("MeanAge"));
+                double modifier = datamodel.getUser(userIndex).getDataBank().getDouble("AgeFairness");
                 //System.out.println("ITEM" + modifier);
                 double error = modifier * (item.getRatingAt(pos) - predict(userIndex, itemIndex));
                 for (int k = 0; k < numFactors; k++) {

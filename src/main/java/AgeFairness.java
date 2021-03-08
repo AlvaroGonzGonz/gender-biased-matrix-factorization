@@ -1,5 +1,6 @@
 import es.upm.etsisi.cf4j.data.DataModel;
 import es.upm.etsisi.cf4j.qualityMeasure.QualityMeasure;
+import es.upm.etsisi.cf4j.qualityMeasure.prediction.MAE;
 import es.upm.etsisi.cf4j.recommender.Recommender;
 import es.upm.etsisi.cf4j.recommender.matrixFactorization.PMF;
 import es.upm.etsisi.cf4j.util.plot.LinePlot;
@@ -34,7 +35,7 @@ public class AgeFairness {
             for (int age : AGES) {
 
                 //QualityMeasure pmfmae = new AMAE(pmf, age);
-                QualityMeasure npmfmae = new AMAE(npmf, age);
+                QualityMeasure npmfmae = new MAE(npmf);
 
                 //double ageScore = pmfmae.getScore();
                 //plot.setValue("PMF", age, ageScore);
