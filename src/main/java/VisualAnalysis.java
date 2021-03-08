@@ -11,7 +11,7 @@ import java.util.Arrays;
 public class VisualAnalysis {
     private static final int NUM_ITERS = 500;
     private static final long RANDOM_SEED = 43L;
-    private static final int FACTORS = 8;
+    private static final int FACTORS = 15;
 
     public VisualAnalysis(){
     }
@@ -21,7 +21,7 @@ public class VisualAnalysis {
         PrintWriter pw = null;
 
         try{
-            fichero = new FileWriter("userFactors");
+            fichero = new FileWriter("userFactors" + FACTORS);
             pw = new PrintWriter(fichero);
 
             DataModel datamodel = DataModel.load("ml1M");
