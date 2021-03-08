@@ -250,8 +250,7 @@ public class nPMF extends Recommender {
         @Override
         public void run(User user) {
             int userIndex = user.getUserIndex();
-            double modifier = 1.0;//user.getDataBank().getDouble("AgeFairness");
-            //System.out.println("USER" + modifier);
+            double modifier = (user.getDataBank().getDouble("AgeFairness"))/(460);
             for (int pos = 0; pos < user.getNumberOfRatings(); pos++) {
                 int itemIndex = user.getItemAt(pos);
                 double error = modifier * (user.getRatingAt(pos) - predict(userIndex, itemIndex));
@@ -276,8 +275,7 @@ public class nPMF extends Recommender {
             int itemIndex = item.getItemIndex();
             for (int pos = 0; pos < item.getNumberOfRatings(); pos++) {
                 int userIndex = item.getUserAt(pos);
-                double modifier = datamodel.getUser(userIndex).getDataBank().getDouble("AgeFairness");
-                //System.out.println("ITEM" + modifier);
+                double modifier = (datamodel.getUser(userIndex).getDataBank().getDouble("AgeFairness"))/(460);
                 double error = modifier * (item.getRatingAt(pos) - predict(userIndex, itemIndex));
                 for (int k = 0; k < numFactors; k++) {
                     q[itemIndex][k] += gamma * (error * p[userIndex][k] - lambda * q[itemIndex][k]);
