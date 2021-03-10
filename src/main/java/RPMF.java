@@ -1,6 +1,4 @@
-import es.upm.etsisi.cf4j.data.DataModel;
-import es.upm.etsisi.cf4j.data.DataSet;
-import es.upm.etsisi.cf4j.data.RandomSplitDataSet;
+import es.upm.etsisi.cf4j.data.*;
 import es.upm.etsisi.cf4j.recommender.Recommender;
 import es.upm.etsisi.cf4j.recommender.matrixFactorization.PMF;
 
@@ -13,6 +11,9 @@ public class RPMF extends Recommender implements Iterable<RPMF>{
 
     /** Path out */
     protected String pathout;
+
+    /** Age range*/
+    protected double[] ageRange;
 
     /** Recommender */
     protected PMF recommender;
@@ -41,10 +42,11 @@ public class RPMF extends Recommender implements Iterable<RPMF>{
     /** Seed */
     protected final long seed;
 
-    public RPMF(DataModel datamodel, String pathout, int numFactors, int numIters, double lambda, double gamma, long seed){
+    public RPMF(DataModel datamodel, String pathout, double[] ageRange, int numFactors, int numIters, double lambda, double gamma, long seed){
         super(datamodel);
 
         this.pathout = pathout;
+        this.ageRange = ageRange;
 
         this.numFactors = numFactors;
         this.numIters = numIters;
@@ -74,10 +76,10 @@ public class RPMF extends Recommender implements Iterable<RPMF>{
             return parent.getLevel() + 1;
     }
 
-    public RPMF addChild(int childnumber, int numFactors, int numIters, double lambda, double gamma, long seed) throws Exception{
+    public RPMF addChild(int childnumber, double[] ageRange, int numFactors, int numIters, double lambda, double gamma, long seed) throws Exception{
         String childpathout = pathout + childnumber;
         DataModel childdatamodel = DataModel.load(pathout + "/ml-1m-" + childnumber);
-        RPMF childNode = new RPMF(childdatamodel, childpathout, numFactors, numIters, lambda, gamma, seed);
+        RPMF childNode = new RPMF(childdatamodel, childpathout, ageRange, numFactors, numIters, lambda, gamma, seed);
         childNode.parent = this;
         this.children.add(childNode);
         this.registerChildForSearch(childNode);
@@ -110,27 +112,47 @@ public class RPMF extends Recommender implements Iterable<RPMF>{
     public void fit() {
         try {
             this.recommender.fit();
-            if(this.getLevel()< 2) {
+            /*if(this.getLevel()< 2) {
                 this.generateErrors();
                 this.generateDatamodel();
-            }
+            }*/
         }catch (Exception e){
             e.printStackTrace();
         }
     }
 
-    public double predict(int userIndex, int itemIndex){
-        double result = this.recommender.predict(userIndex, itemIndex);
-        for(RPMF child : children){
-            result += child.predict(userIndex, itemIndex);
+    public double predict(int userId, int itemId){
+        double result = 0.0;
+
+        int userIndex = this.datamodel.findUserIndex(String.valueOf(userId));
+        if(userIndex != -1) {
+            if (this.datamodel.getUser(userIndex) != null) {
+                int itemIndex = this.datamodel.findItemIndex(String.valueOf(itemId));
+
+                result = this.recommender.predict(userIndex, itemIndex);
+                for (RPMF child : children) {
+                    result += child.predict(userId, itemId);
+                }
+            }
         }
 
         return result;
     }
 
+    public double[] predict(TestUser testUser) {
+        int userId = Integer.parseInt(testUser.getId());
+        double[] predictions = new double[testUser.getNumberOfTestRatings()];
+        for (int i = 0; i < predictions.length; i++) {
+            int testItemIndex = testUser.getTestItemAt(i);
+            TestItem testItem = this.datamodel.getTestItem(testItemIndex);
+            int itemId = Integer.parseInt(testItem.getId());
+            predictions[i] = this.predict(userId, itemId);
+        }
+        return predictions;
+    }
+
     public void generateErrors() throws Exception{
         String linea;
-        int count;
 
         File archivoRatings = null;
         FileReader frR = null;
