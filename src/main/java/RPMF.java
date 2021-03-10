@@ -1,17 +1,20 @@
 import es.upm.etsisi.cf4j.data.DataModel;
+import es.upm.etsisi.cf4j.data.DataSet;
+import es.upm.etsisi.cf4j.data.RandomSplitDataSet;
 import es.upm.etsisi.cf4j.recommender.Recommender;
 import es.upm.etsisi.cf4j.recommender.matrixFactorization.PMF;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
+import java.io.*;
+import java.util.*;
 
 public class RPMF extends Recommender implements Iterable<RPMF>{
     protected static final double DEFAULT_GAMMA = 0.01;
     protected static final double DEFAULT_LAMBDA = 0.05;
 
-    /** PMFs root */
+    /** Path out */
+    protected String pathout;
+
+    /** Recommender */
     protected PMF recommender;
 
     /** Parent RPMF */
@@ -35,17 +38,21 @@ public class RPMF extends Recommender implements Iterable<RPMF>{
     /** Number of iterations */
     protected final int numIters;
 
-    public RPMF(DataModel datamodel, int numFactors, int numIters, double lambda, double gamma, long seed){
+    /** Seed */
+    protected final long seed;
+
+    public RPMF(DataModel datamodel, String pathout, int numFactors, int numIters, double lambda, double gamma, long seed){
         super(datamodel);
+
+        this.pathout = pathout;
 
         this.numFactors = numFactors;
         this.numIters = numIters;
         this.lambda = lambda;
         this.gamma = gamma;
+        this.seed = seed;
 
-        Random rand = new Random(seed);
-
-        recommender = new PMF(datamodel, this.numFactors, this.numIters, this.lambda, this.gamma, seed);
+        recommender = new PMF(datamodel, this.numFactors, this.numIters, this.lambda, this.gamma, this.seed);
 
         this.children = new LinkedList<RPMF>();
         this.elementsIndex = new LinkedList<RPMF>();
@@ -67,8 +74,10 @@ public class RPMF extends Recommender implements Iterable<RPMF>{
             return parent.getLevel() + 1;
     }
 
-    public RPMF addChild(DataModel datamodel, int numFactors, int numIters, double lambda, double gamma, long seed) {
-        RPMF childNode = new RPMF(datamodel, this.numFactors, this.numIters, this.lambda, this.gamma, seed);
+    public RPMF addChild(int childnumber, int numFactors, int numIters, double lambda, double gamma, long seed) throws Exception{
+        String childpathout = pathout + childnumber;
+        DataModel childdatamodel = DataModel.load(pathout + "/ml-1m-" + childnumber);
+        RPMF childNode = new RPMF(childdatamodel, childpathout, numFactors, numIters, lambda, gamma, seed);
         childNode.parent = this;
         this.children.add(childNode);
         this.registerChildForSearch(childNode);
@@ -98,11 +107,16 @@ public class RPMF extends Recommender implements Iterable<RPMF>{
         return null;
     }
 
-    public void fit(){
-        this.recommender.fit();
-         for(RPMF child : children){
-             child.fit();
-         }
+    public void fit() {
+        try {
+            this.recommender.fit();
+            if(this.getLevel()< 2) {
+                this.generateErrors();
+                this.generateDatamodel();
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     public double predict(int userIndex, int itemIndex){
@@ -112,6 +126,62 @@ public class RPMF extends Recommender implements Iterable<RPMF>{
         }
 
         return result;
+    }
+
+    public void generateErrors() throws Exception{
+        String linea;
+        int count;
+
+        File archivoRatings = null;
+        FileReader frR = null;
+        BufferedReader brR = null;
+
+        File archivo = null;
+        FileReader fr = null;
+        BufferedReader br = null;
+
+        FileWriter fichero = null;
+        PrintWriter pw = null;
+
+        for(int i=1; i<3; i++) {
+            Map<String, String> id2Index = new HashMap();
+
+            archivo = new File (pathout + "/users.dat");
+            fr = new FileReader (archivo);
+            br = new BufferedReader(fr);
+
+            while((linea=br.readLine())!=null){
+                String[] parts = linea.split("::");
+                id2Index.put(parts[0], parts[0]);
+            }
+
+            archivoRatings = new File (pathout + "/ratings.dat");
+            frR = new FileReader (archivoRatings);
+            brR = new BufferedReader(frR);
+
+            fichero = new FileWriter(pathout + "/errors" + i + ".dat");
+            pw = new PrintWriter(fichero);
+
+            while((linea=brR.readLine())!=null){
+                String[] parts = linea.split("::");
+                if(id2Index.containsKey(parts[0])) {
+                    double rating = Double.parseDouble(parts[2]);
+                    rating = this.recommender.predict(this.datamodel.findUserIndex(parts[0]), this.datamodel.findItemIndex(parts[1])) - rating;
+                    pw.println(parts[0] + "::" + parts[1] + "::" + String.valueOf(rating) + "::" + parts[3]);
+                }
+            }
+        }
+    }
+
+    public void generateDatamodel() throws Exception{
+        System.out.println(pathout);
+
+        for(int i=1; i<3; i++) {
+            DataSet dataset = new RandomSplitDataSet(pathout + "/errors" + i + ".dat", 0.2, 0.1, "::");
+            DataModel datamodel = new DataModel(dataset);
+
+            datamodel.save(pathout + "/ml-1m-" + i);
+        }
     }
 }
 
