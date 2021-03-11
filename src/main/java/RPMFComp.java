@@ -1,13 +1,16 @@
 import es.upm.etsisi.cf4j.data.DataModel;
 import es.upm.etsisi.cf4j.qualityMeasure.QualityMeasure;
 import es.upm.etsisi.cf4j.qualityMeasure.prediction.MAE;
+import es.upm.etsisi.cf4j.recommender.matrixFactorization.PMF;
+import es.upm.etsisi.cf4j.util.plot.LinePlot;
 
 public class RPMFComp {
-    private static final int NUM_FACTORS = 6;
-    private static final int NUM_ITERS = 500;
-    private static final double LAMBDA = 0.01;
-    private static final double GAMMA = 0.045;
+    private static final int NUM_FACTORS = 9;
+    private static final int NUM_ITERS = 50;
+    private static final double LAMBDA = 0.045;
+    private static final double GAMMA = 0.01;
     private static final long SEED = 43L;
+    private static final int[] AGES = {1, 18, 25, 35, 45, 50, 56};
 
     public RPMFComp(){
     }
@@ -16,33 +19,60 @@ public class RPMFComp {
         try {
             DataModel datamodel = DataModel.load("ml-1m");
 
-            RPMF rpmf = new RPMF(datamodel, "RPMF/Group", new double[]{0.0, 100.0}, NUM_FACTORS, NUM_ITERS, LAMBDA, GAMMA, SEED);
-            rpmf.fit();
-            rpmf.addChild(1, new double[]{0.0, 34.64}, NUM_FACTORS, NUM_ITERS, LAMBDA, GAMMA, SEED);
-            rpmf.addChild(2, new double[]{34.64, 100.0}, NUM_FACTORS, NUM_ITERS, LAMBDA, GAMMA, SEED);
+            LinePlot plot = new LinePlot(AGES, "User age", "MAE");
 
-            double[][] aux = new double[][]{{0.0, 26.01},
-                                            {26.01, 34.64},
-                                            {34.64, 45.93},
-                                            {45.93, 100.0}};
-            int count = 0;
+            RPMF rpmf = new RPMF(datamodel, "RPMF/Group", NUM_FACTORS, NUM_ITERS, LAMBDA, GAMMA, SEED);
+            rpmf.fit();
+
+            plot.addSeries("RPMF");
+
+            for(int age : AGES){
+                QualityMeasure pmfmae = new AMAE(rpmf, age);
+                plot.setValue("RPMF", age, pmfmae.getScore());
+            }
+
+            rpmf.addChild(1, NUM_FACTORS, NUM_ITERS, LAMBDA, GAMMA, SEED);
+            rpmf.addChild(2, NUM_FACTORS, NUM_ITERS, LAMBDA, GAMMA, SEED);
 
             for(RPMF child : rpmf.children) {
                 child.fit();
+            }
 
-                child.addChild(1, aux[count], NUM_FACTORS, NUM_ITERS, LAMBDA, GAMMA, SEED);
-                count++;
-                child.addChild(2, aux[count], NUM_FACTORS, NUM_ITERS, LAMBDA, GAMMA, SEED);
-                count++;
+            plot.addSeries("RPMF-children");
+
+            for(int age : AGES){
+                QualityMeasure pmfmae = new AMAE(rpmf, age);
+                plot.setValue("RPMF-children", age, pmfmae.getScore());
+            }
+
+            for(RPMF child : rpmf.children) {
+                child.addChild(1, NUM_FACTORS, NUM_ITERS, LAMBDA, GAMMA, SEED);
+                child.addChild(2, NUM_FACTORS, NUM_ITERS, LAMBDA, GAMMA, SEED);
 
                 for(RPMF grandchild : child.children){
                     grandchild.fit();
                 }
             }
 
-            QualityMeasure rpmfmae = new MAE(rpmf);
+            plot.addSeries("RPMF-grandchildren");
 
-            System.out.println(rpmfmae.getScore());
+            for(int age : AGES){
+                QualityMeasure pmfmae = new AMAE(rpmf, age);
+                plot.setValue("RPMF-grandchildren", age, pmfmae.getScore());
+            }
+
+            PMF pmf = new PMF(datamodel, NUM_FACTORS, NUM_ITERS, LAMBDA, GAMMA, SEED);
+            pmf.fit();
+
+            plot.addSeries("PMF");
+
+            for(int age : AGES){
+                QualityMeasure pmfmae = new AMAE(pmf, age);
+                plot.setValue("PMF", age, pmfmae.getScore());
+            }
+
+            plot.printData("0", "0.0000");
+            plot.draw();
 
         }catch (Exception e){
             e.printStackTrace();

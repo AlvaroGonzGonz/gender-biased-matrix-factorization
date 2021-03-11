@@ -12,9 +12,6 @@ public class RPMF extends Recommender implements Iterable<RPMF>{
     /** Path out */
     protected String pathout;
 
-    /** Age range*/
-    protected double[] ageRange;
-
     /** Recommender */
     protected PMF recommender;
 
@@ -42,11 +39,10 @@ public class RPMF extends Recommender implements Iterable<RPMF>{
     /** Seed */
     protected final long seed;
 
-    public RPMF(DataModel datamodel, String pathout, double[] ageRange, int numFactors, int numIters, double lambda, double gamma, long seed){
+    public RPMF(DataModel datamodel, String pathout, int numFactors, int numIters, double lambda, double gamma, long seed){
         super(datamodel);
 
         this.pathout = pathout;
-        this.ageRange = ageRange;
 
         this.numFactors = numFactors;
         this.numIters = numIters;
@@ -76,10 +72,12 @@ public class RPMF extends Recommender implements Iterable<RPMF>{
             return parent.getLevel() + 1;
     }
 
-    public RPMF addChild(int childnumber, double[] ageRange, int numFactors, int numIters, double lambda, double gamma, long seed) throws Exception{
+    public RPMF addChild(int childnumber, int numFactors, int numIters, double lambda, double gamma, long seed) throws Exception{
+        System.out.println("Adding Child " + pathout + "" + childnumber);
         String childpathout = pathout + childnumber;
         DataModel childdatamodel = DataModel.load(pathout + "/ml-1m-" + childnumber);
-        RPMF childNode = new RPMF(childdatamodel, childpathout, ageRange, numFactors, numIters, lambda, gamma, seed);
+        System.out.println("Loaded Datamodel");
+        RPMF childNode = new RPMF(childdatamodel, childpathout, numFactors, numIters, lambda, gamma, seed);
         childNode.parent = this;
         this.children.add(childNode);
         this.registerChildForSearch(childNode);
@@ -112,10 +110,10 @@ public class RPMF extends Recommender implements Iterable<RPMF>{
     public void fit() {
         try {
             this.recommender.fit();
-            /*if(this.getLevel()< 2) {
+            if(this.getLevel()< 2) {
                 this.generateErrors();
                 this.generateDatamodel();
-            }*/
+            }
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -126,13 +124,11 @@ public class RPMF extends Recommender implements Iterable<RPMF>{
 
         int userIndex = this.datamodel.findUserIndex(String.valueOf(userId));
         if(userIndex != -1) {
-            if (this.datamodel.getUser(userIndex) != null) {
-                int itemIndex = this.datamodel.findItemIndex(String.valueOf(itemId));
+            int itemIndex = this.datamodel.findItemIndex(String.valueOf(itemId));
 
-                result = this.recommender.predict(userIndex, itemIndex);
-                for (RPMF child : children) {
-                    result += child.predict(userId, itemId);
-                }
+            result = this.recommender.predict(userIndex, itemIndex);
+            for (RPMF child : children) {
+                result += child.predict(userId, itemId);
             }
         }
 
@@ -165,41 +161,61 @@ public class RPMF extends Recommender implements Iterable<RPMF>{
         FileWriter fichero = null;
         PrintWriter pw = null;
 
-        for(int i=1; i<3; i++) {
-            Map<String, String> id2Index = new HashMap();
+        try {
+            for (int i = 1; i < 3; i++) {
+                Map<String, String> id2Index = new HashMap();
 
-            archivo = new File (pathout + "/users.dat");
-            fr = new FileReader (archivo);
-            br = new BufferedReader(fr);
+                archivo = new File(pathout + i + "/users.dat");
+                fr = new FileReader(archivo);
+                br = new BufferedReader(fr);
 
-            while((linea=br.readLine())!=null){
-                String[] parts = linea.split("::");
-                id2Index.put(parts[0], parts[0]);
-            }
-
-            archivoRatings = new File (pathout + "/ratings.dat");
-            frR = new FileReader (archivoRatings);
-            brR = new BufferedReader(frR);
-
-            fichero = new FileWriter(pathout + "/errors" + i + ".dat");
-            pw = new PrintWriter(fichero);
-
-            while((linea=brR.readLine())!=null){
-                String[] parts = linea.split("::");
-                if(id2Index.containsKey(parts[0])) {
-                    double rating = Double.parseDouble(parts[2]);
-                    rating = this.recommender.predict(this.datamodel.findUserIndex(parts[0]), this.datamodel.findItemIndex(parts[1])) - rating;
-                    pw.println(parts[0] + "::" + parts[1] + "::" + String.valueOf(rating) + "::" + parts[3]);
+                while ((linea = br.readLine()) != null) {
+                    String[] parts = linea.split("::");
+                    id2Index.put(parts[0], parts[0]);
                 }
+
+                if(this.isRoot()){
+                    archivoRatings = new File(pathout + "/ratings.dat");
+                    frR = new FileReader(archivoRatings);
+                    brR = new BufferedReader(frR);
+                } else {
+                    archivoRatings = new File(parent.pathout + "/errors" + i + ".dat");
+                    frR = new FileReader(archivoRatings);
+                    brR = new BufferedReader(frR);
+                }
+
+                fichero = new FileWriter(pathout + "/errors" + i + ".dat");
+                pw = new PrintWriter(fichero);
+
+                while ((linea = brR.readLine()) != null) {
+                    String[] parts = linea.split("::");
+                    if (id2Index.containsKey(parts[0])) {
+                        double rating = Double.parseDouble(parts[2]);
+                        double prediction = this.recommender.predict(this.datamodel.findUserIndex(parts[0]), this.datamodel.findItemIndex(parts[1]));
+                        rating = rating - prediction;
+                        pw.println(parts[0] + "::" + parts[1] + "::" + String.valueOf(rating) + "::" + parts[3]);
+                    }
+                }
+                pw.flush();
             }
+        }finally{
+            if(fr != null){
+                fr.close();
+                br.close();
+            }
+            if(frR != null){
+                frR.close();
+                br.close();
+            }
+            fichero.close();
+            pw.close();
         }
     }
 
     public void generateDatamodel() throws Exception{
-        System.out.println(pathout);
 
         for(int i=1; i<3; i++) {
-            DataSet dataset = new RandomSplitDataSet(pathout + "/errors" + i + ".dat", 0.2, 0.1, "::");
+            DataSet dataset = new RandomSplitDataSet(pathout + "/errors" + i + ".dat", 0.0, 0.0, "::");
             DataModel datamodel = new DataModel(dataset);
 
             datamodel.save(pathout + "/ml-1m-" + i);
