@@ -12,6 +12,9 @@ public class RPMF extends Recommender implements Iterable<RPMF>{
     /** Path out */
     protected String pathout;
 
+    /** Child number */
+    public int childnumber;
+
     /** Recommender */
     protected PMF recommender;
 
@@ -39,10 +42,11 @@ public class RPMF extends Recommender implements Iterable<RPMF>{
     /** Seed */
     protected final long seed;
 
-    public RPMF(DataModel datamodel, String pathout, int numFactors, int numIters, double lambda, double gamma, long seed){
+    public RPMF(DataModel datamodel, String pathout, int childnumber, int numFactors, int numIters, double lambda, double gamma, long seed){
         super(datamodel);
 
         this.pathout = pathout;
+        this.childnumber = childnumber;
 
         this.numFactors = numFactors;
         this.numIters = numIters;
@@ -77,7 +81,7 @@ public class RPMF extends Recommender implements Iterable<RPMF>{
         String childpathout = pathout + childnumber;
         DataModel childdatamodel = DataModel.load(pathout + "/ml-1m-" + childnumber);
         System.out.println("Loaded Datamodel");
-        RPMF childNode = new RPMF(childdatamodel, childpathout, numFactors, numIters, lambda, gamma, seed);
+        RPMF childNode = new RPMF(childdatamodel, childpathout, childnumber, numFactors, numIters, lambda, gamma, seed);
         childNode.parent = this;
         this.children.add(childNode);
         this.registerChildForSearch(childNode);
@@ -169,23 +173,29 @@ public class RPMF extends Recommender implements Iterable<RPMF>{
                 fr = new FileReader(archivo);
                 br = new BufferedReader(fr);
 
+                System.out.println("\nLeyendo fichero " + archivo.getAbsolutePath());
+
                 while ((linea = br.readLine()) != null) {
                     String[] parts = linea.split("::");
                     id2Index.put(parts[0], parts[0]);
                 }
 
+                System.out.println("Numero de usuarios: " + id2Index.size());
+
                 if(this.isRoot()){
                     archivoRatings = new File(pathout + "/ratings.dat");
-                    frR = new FileReader(archivoRatings);
-                    brR = new BufferedReader(frR);
                 } else {
-                    archivoRatings = new File(parent.pathout + "/errors" + i + ".dat");
-                    frR = new FileReader(archivoRatings);
-                    brR = new BufferedReader(frR);
+                    archivoRatings = new File(this.parent.pathout + "/errors" + this.childnumber + ".dat");
                 }
+                frR = new FileReader(archivoRatings);
+                brR = new BufferedReader(frR);
+
+                System.out.println("Cargando archivo " + archivoRatings.getAbsolutePath());
 
                 fichero = new FileWriter(pathout + "/errors" + i + ".dat");
                 pw = new PrintWriter(fichero);
+
+                System.out.println("Imprimiendo fichero " + pathout + "/errors" + i + ".dat");
 
                 while ((linea = brR.readLine()) != null) {
                     String[] parts = linea.split("::");
@@ -207,8 +217,10 @@ public class RPMF extends Recommender implements Iterable<RPMF>{
                 frR.close();
                 br.close();
             }
-            fichero.close();
-            pw.close();
+            if(fichero != null) {
+                fichero.close();
+                pw.close();
+            }
         }
     }
 
