@@ -45,6 +45,13 @@ public class RPMF extends Recommender implements Iterable<RPMF>{
     public RPMF(DataModel datamodel, String pathout, int childnumber, int numFactors, int numIters, double lambda, double gamma, long seed){
         super(datamodel);
 
+        System.out.println("Number of Users: " + this.datamodel.getNumberOfUsers());
+        System.out.println("Number of Test Users: " + this.datamodel.getNumberOfTestUsers());
+        System.out.println("Number of Items: " + this.datamodel.getNumberOfItems());
+        System.out.println("Number of Test Items: " + this.datamodel.getNumberOfTestItems());
+        System.out.println("Number of Ratings: " + this.datamodel.getNumberOfRatings());
+        System.out.println("Number of Test Ratings: " + this.datamodel.getNumberOfTestRatings());
+
         this.pathout = pathout;
         this.childnumber = childnumber;
 
@@ -114,7 +121,7 @@ public class RPMF extends Recommender implements Iterable<RPMF>{
     public void fit() {
         try {
             this.recommender.fit();
-            if(this.getLevel()< 2) {
+            if(this.getLevel()< 1) {
                 this.generateErrors();
                 this.generateDatamodel();
             }
@@ -127,11 +134,13 @@ public class RPMF extends Recommender implements Iterable<RPMF>{
         double result = 0.0;
 
         int userIndex = this.datamodel.findUserIndex(String.valueOf(userId));
-        if(userIndex != -1) {
-            int itemIndex = this.datamodel.findItemIndex(String.valueOf(itemId));
+        int itemIndex = this.datamodel.findItemIndex(String.valueOf(itemId));
+
+        if(userIndex != -1 && itemIndex != -1) {
+
 
             result = this.recommender.predict(userIndex, itemIndex);
-            for (RPMF child : children) {
+            for (RPMF child : this.children) {
                 result += child.predict(userId, itemId);
             }
         }
@@ -200,10 +209,12 @@ public class RPMF extends Recommender implements Iterable<RPMF>{
                 while ((linea = brR.readLine()) != null) {
                     String[] parts = linea.split("::");
                     if (id2Index.containsKey(parts[0])) {
-                        double rating = Double.parseDouble(parts[2]);
-                        double prediction = this.recommender.predict(this.datamodel.findUserIndex(parts[0]), this.datamodel.findItemIndex(parts[1]));
-                        rating = rating - prediction;
-                        pw.println(parts[0] + "::" + parts[1] + "::" + String.valueOf(rating) + "::" + parts[3]);
+                        if(this.datamodel.findTestUserIndex(parts[0]) == -1 || this.datamodel.findTestItemIndex(parts[1]) == -1) {
+                            double rating = Double.parseDouble(parts[2]);
+                            double prediction = this.recommender.predict(this.datamodel.findUserIndex(parts[0]), this.datamodel.findItemIndex(parts[1]));
+                            rating = rating - prediction;
+                            pw.println(parts[0] + "::" + parts[1] + "::" + String.valueOf(rating) + "::" + parts[3]);
+                        }
                     }
                 }
                 pw.flush();

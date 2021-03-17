@@ -1,14 +1,13 @@
 import es.upm.etsisi.cf4j.data.DataModel;
 import es.upm.etsisi.cf4j.qualityMeasure.QualityMeasure;
-import es.upm.etsisi.cf4j.qualityMeasure.prediction.MAE;
 import es.upm.etsisi.cf4j.recommender.matrixFactorization.PMF;
 import es.upm.etsisi.cf4j.util.plot.LinePlot;
 
 public class RPMFComp {
-    private static final int NUM_FACTORS = 9;
-    private static final int NUM_ITERS = 50;
-    private static final double LAMBDA = 0.045;
-    private static final double GAMMA = 0.01;
+    private static final int NUM_FACTORS = 2;
+    private static final int NUM_ITERS = 300;
+    private static final double LAMBDA = 0.1;
+    private static final double GAMMA = 0.015;
     private static final long SEED = 43L;
     private static final int[] AGES = {1, 18, 25, 35, 45, 50, 56};
 
@@ -61,7 +60,7 @@ public class RPMFComp {
                 plot.setValue("RPMF-grandchildren", age, pmfmae.getScore());
             }
 
-            PMF pmf = new PMF(datamodel, NUM_FACTORS, NUM_ITERS, LAMBDA, GAMMA, SEED);
+            PMF pmf = new PMF(datamodel, 9, 100, 0.045, 0.01, SEED);
             pmf.fit();
 
             plot.addSeries("PMF");

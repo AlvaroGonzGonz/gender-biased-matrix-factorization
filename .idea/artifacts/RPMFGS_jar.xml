@@ -1,0 +1,13 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="RPMFGS:jar">
+    <output-path>D:/Archivos</output-path>
+    <root id="archive" name="gender-biased-matrix-factorization.jar">
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="D:/Archivos/META-INF/MANIFEST.MF" />
+      </element>
+      <element id="module-output" name="gender-biased-matrix-factorization" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/jheatchart-0.6.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/es/upm/etsisi/cf4j/2.1.1/cf4j-2.1.1.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
