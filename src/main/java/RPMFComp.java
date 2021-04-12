@@ -20,7 +20,7 @@ public class RPMFComp {
 
             LinePlot plot = new LinePlot(AGES, "User age", "MAE");
 
-            RPMF rpmf = new RPMF(datamodel, "RPMF/Group", 0, NUM_FACTORS, NUM_ITERS, LAMBDA, GAMMA, SEED);
+            RPMF rpmf = new RPMF(datamodel, "RPMF/Group", 0, 9, NUM_ITERS, 0.045, 0.01, SEED);
             rpmf.fit();
 
             plot.addSeries("RPMF");
