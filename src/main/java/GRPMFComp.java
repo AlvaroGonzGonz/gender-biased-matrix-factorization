@@ -1,5 +1,6 @@
 import es.upm.etsisi.cf4j.data.DataModel;
 import es.upm.etsisi.cf4j.qualityMeasure.QualityMeasure;
+import es.upm.etsisi.cf4j.recommender.matrixFactorization.PMF;
 import es.upm.etsisi.cf4j.util.plot.LinePlot;
 
 public class GRPMFComp {
@@ -45,8 +46,20 @@ public class GRPMFComp {
             pmfmae = new GMAE(rpmf, 1.0);
             plot.setValue("GRPMF-children", 1.0, pmfmae.getScore());
 
+            PMF pmf = new PMF(datamodel, 9, 100, 0.045, 0.01, SEED);
+            pmf.fit();
+
+            plot.addSeries("PMF");
+
+            pmfmae = new GMAE(pmf, 0.0);
+            plot.setValue("PMF", 0.0, pmfmae.getScore());
+
+            pmfmae = new GMAE(pmf, 1.0);
+            plot.setValue("PMF", 1.0, pmfmae.getScore());
+
             plot.printData("0", "0.0000");
             plot.draw();
+            // k=75 para kNN
 
         }catch (Exception e){
             e.printStackTrace();
