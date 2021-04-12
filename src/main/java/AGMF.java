@@ -278,6 +278,15 @@ public class AGMF extends Recommender {
         return this.q[itemIndex][group];
     }
 
+    public double softmax(int userIndex, int group){
+        double sum = 0.0;
+        for(int g = 0; g < numGroups; g++){
+            sum += Math.exp(w[userIndex][g]);
+        }
+
+        return (Math.exp(group)/sum);
+    }
+
     @Override
     public void fit() {
         System.out.println("\nFitting " + this.toString());
@@ -293,10 +302,21 @@ public class AGMF extends Recommender {
 
     @Override
     public double predict(int userIndex, int itemIndex) {
+        double aux;
         double result = 0.0;
         for (int g = 0; g < this.numGroups; g++){
-            result += Maths.dotProduct(this.p[userIndex][g], this.q[itemIndex][g]);
+            for(int k = 0; k < this.numFactors; k++) {
+                aux = this.softmax(userIndex, g) * this.p[userIndex][g][k] * this.q[itemIndex][g][k];
+                if(Double.isNaN(aux)){
+                    System.out.println("Softmax: " + this.softmax(userIndex, g));
+                    System.out.println("User factor: " + this.p[userIndex][g][k]);
+                    System.out.println("Item factor: " + this.q[itemIndex][g][k]);
+                }
+                result += aux;
+            }
         }
+        System.out.println(result);
+
         return result;
     }
 
@@ -334,17 +354,9 @@ public class AGMF extends Recommender {
 
     /** Auxiliary inner class to parallelize user factors computation */
     private class UpdateUsersFactors implements Partible<User> {
-        private double[][] gradient_p = new double[numGroups][numFactors];
-        private double[] gradient_w = new double[numGroups];
 
         @Override
         public void beforeRun() {
-            for(int x = 0; x < numGroups; x++){
-                gradient_w[x] = 0.0;
-                for (int y = 0; y < numFactors; y++){
-                    gradient_p[x][y] = 0.0;
-                }
-            }
         }
 
         @Override
@@ -356,23 +368,16 @@ public class AGMF extends Recommender {
                 double error = user.getRatingAt(pos) - predict(userIndex, itemIndex);
                 for (int g = 0; g< numGroups; g++) {
                     for (int k = 0; k < numFactors; k++) {
-                        gradient_p[g][k] += gamma_p * (this.softmax(userIndex, g) * error * q[itemIndex][g][k] - lambda_p * p[userIndex][g][k]);
+                        p[userIndex][g][k] += gamma_p * (this.softmax(userIndex, g) * error * q[itemIndex][g][k] - lambda_p * p[userIndex][g][k]);
                     }
 
                     for (int k = 0; k < numGroups; k++) {
                         if (g == k) {
-                            gradient_w[g] += gamma_w * (((1 - this.softmax(userIndex, g)) * this.softmax(userIndex, g)) * Math.pow(error, 2) - lambda_w * w[userIndex][g]);
+                            w[userIndex][g] += gamma_w * (((1 - this.softmax(userIndex, g)) * this.softmax(userIndex, g)) * Math.pow(error, 2) - lambda_w * w[userIndex][g]);
                         } else if (g != k) {
-                            gradient_w[g] += gamma_w * ((-this.softmax(userIndex, g) * this.softmax(userIndex, k)) * Math.pow(error, 2) - lambda_w * w[userIndex][g]);
+                            w[userIndex][g] += gamma_w * ((-this.softmax(userIndex, g) * this.softmax(userIndex, k)) * Math.pow(error, 2) - lambda_w * w[userIndex][g]);
                         }
                     }
-                }
-            }
-
-            for(int x = 0; x < numGroups; x++){
-                w[userIndex][x] += gradient_w[x];
-                for (int y = 0; y < numFactors; y++){
-                    p[userIndex][x][y] += gradient_p[x][y];
                 }
             }
         }

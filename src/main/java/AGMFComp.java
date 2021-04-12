@@ -7,7 +7,7 @@ import es.upm.etsisi.cf4j.util.Range;
 import es.upm.etsisi.cf4j.util.plot.LinePlot;
 
 public class AGMFComp {
-    private static final int[] NUM_FACTORS = Range.ofIntegers(2, 1, 14);
+    private static final int[] NUM_FACTORS = Range.ofIntegers(7, 1, 1);
     private static final int NUM_ITERS = 50;
     private static final long RANDOM_SEED = 43L;
 
@@ -21,19 +21,22 @@ public class AGMFComp {
 
             for (int numFactors : NUM_FACTORS){
                 Recommender agmf = new AGMF(datamodel, numFactors, NUM_ITERS, 7, RANDOM_SEED);
-                agmf.fit();
+                System.out.println("Predicción: " + agmf.predict(1, 3));
+                //agmf.fit();
+                //System.out.println("Predicción: " + agmf.predict(1, 3));
 
-                QualityMeasure agmf_mae = new MAE(agmf);
-                plot.setValue("AGMF", numFactors, agmf_mae.getScore());
+                //QualityMeasure agmf_mae = new MAE(agmf);
+                //plot.setValue("AGMF", numFactors, agmf_mae.getScore());
 
-                Recommender pmf = new PMF(datamodel, numFactors, NUM_ITERS, 0.045, 0.01, RANDOM_SEED);
+                /*Recommender pmf = new PMF(datamodel, numFactors, NUM_ITERS, 0.045, 0.01, RANDOM_SEED);
                 pmf.fit();
 
                 QualityMeasure pmf_mae = new MAE(pmf);
-                plot.setValue("PMF", numFactors, pmf_mae.getScore());
+                plot.setValue("PMF", numFactors, pmf_mae.getScore());*/
             }
 
-            plot.draw();
+            plot.printData("0", "0.0000");
+            //plot.draw();
         }catch (Exception e){
             e.printStackTrace();
         }
