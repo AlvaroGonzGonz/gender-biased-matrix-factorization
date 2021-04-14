@@ -7,36 +7,35 @@ import es.upm.etsisi.cf4j.util.Range;
 import es.upm.etsisi.cf4j.util.plot.LinePlot;
 
 public class AGMFComp {
-    private static final int[] NUM_FACTORS = Range.ofIntegers(7, 1, 1);
-    private static final int NUM_ITERS = 50;
+    private static final int[] AGES = {1, 18, 25, 35, 45, 50, 56};
+    private static final int NUM_ITERS = 100;
     private static final long RANDOM_SEED = 43L;
 
     public static void main (String[] args){
         try {
             DataModel datamodel = DataModel.load("ml-1m");
 
-            LinePlot plot = new LinePlot(NUM_FACTORS, "Number of latent factors", "MAE");
-            plot.addSeries("AGMF");
+            LinePlot plot = new LinePlot(AGES, "Number of latent factors", "MAE");
+
             plot.addSeries("PMF");
+            plot.addSeries("AGMF");
 
-            for (int numFactors : NUM_FACTORS){
-                Recommender agmf = new AGMF(datamodel, numFactors, NUM_ITERS, 7, RANDOM_SEED);
-                System.out.println("Predicción: " + agmf.predict(1, 3));
-                //agmf.fit();
-                //System.out.println("Predicción: " + agmf.predict(1, 3));
+            Recommender agmf = new AGMF(datamodel, 7, NUM_ITERS, 2, RANDOM_SEED);
+            agmf.fit();
 
-                //QualityMeasure agmf_mae = new MAE(agmf);
-                //plot.setValue("AGMF", numFactors, agmf_mae.getScore());
+            Recommender pmf = new PMF(datamodel, 7, NUM_ITERS, 0.045, 0.01, RANDOM_SEED);
+            pmf.fit();
 
-                /*Recommender pmf = new PMF(datamodel, numFactors, NUM_ITERS, 0.045, 0.01, RANDOM_SEED);
-                pmf.fit();
+            for (int age : AGES) {
+                QualityMeasure agmf_mae = new AMAE(agmf, age);
+                plot.setValue("AGMF", age, agmf_mae.getScore());
 
-                QualityMeasure pmf_mae = new MAE(pmf);
-                plot.setValue("PMF", numFactors, pmf_mae.getScore());*/
+                QualityMeasure pmf_mae = new AMAE(pmf, age);
+                plot.setValue("PMF", age, pmf_mae.getScore());
             }
 
             plot.printData("0", "0.0000");
-            //plot.draw();
+            plot.draw();
         }catch (Exception e){
             e.printStackTrace();
         }

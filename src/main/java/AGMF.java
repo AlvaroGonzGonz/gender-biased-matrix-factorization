@@ -284,7 +284,7 @@ public class AGMF extends Recommender {
             sum += Math.exp(w[userIndex][g]);
         }
 
-        return (Math.exp(group)/sum);
+        return (Math.exp(w[userIndex][group])/sum);
     }
 
     @Override
@@ -302,20 +302,12 @@ public class AGMF extends Recommender {
 
     @Override
     public double predict(int userIndex, int itemIndex) {
-        double aux;
         double result = 0.0;
         for (int g = 0; g < this.numGroups; g++){
             for(int k = 0; k < this.numFactors; k++) {
-                aux = this.softmax(userIndex, g) * this.p[userIndex][g][k] * this.q[itemIndex][g][k];
-                if(Double.isNaN(aux)){
-                    System.out.println("Softmax: " + this.softmax(userIndex, g));
-                    System.out.println("User factor: " + this.p[userIndex][g][k]);
-                    System.out.println("Item factor: " + this.q[itemIndex][g][k]);
-                }
-                result += aux;
+                result += this.softmax(userIndex, g) * this.p[userIndex][g][k] * this.q[itemIndex][g][k];
             }
         }
-        System.out.println(result);
 
         return result;
     }
@@ -391,7 +383,7 @@ public class AGMF extends Recommender {
                 sum += Math.exp(w[userIndex][g]);
             }
 
-            return (Math.exp(group)/sum);
+            return (Math.exp(w[userIndex][group])/sum);
         }
     }
 
@@ -424,7 +416,7 @@ public class AGMF extends Recommender {
                 sum += Math.exp(w[userIndex][g]);
             }
 
-            return (Math.exp(group)/sum);
+            return (Math.exp(w[userIndex][group])/sum);
         }
     }
 }
