@@ -15,12 +15,12 @@ public class AGMFComp {
         try {
             DataModel datamodel = DataModel.load("ml-1m");
 
-            LinePlot plot = new LinePlot(AGES, "Number of latent factors", "MAE");
+            LinePlot plot = new LinePlot(AGES, "Age group", "MAE");
 
             plot.addSeries("PMF");
             plot.addSeries("AGMF");
 
-            Recommender agmf = new AGMF(datamodel, 7, NUM_ITERS, 2, RANDOM_SEED);
+            Recommender agmf = new AGMF(datamodel, 7, NUM_ITERS, 10, 0.045, 0.01, RANDOM_SEED);
             agmf.fit();
 
             Recommender pmf = new PMF(datamodel, 7, NUM_ITERS, 0.045, 0.01, RANDOM_SEED);

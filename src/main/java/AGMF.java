@@ -129,6 +129,20 @@ public class AGMF extends Recommender {
 
     /**
      * Model constructor
+     * @param datamodel DataModel instance
+     * @param numFactors Number of factors
+     * @param numIters Number of iterations
+     * @param numGroups Number of Groups
+     * @param lambda Regularzation parameter
+     * @param gamma Learning rate parameter
+     * @seed Seed for random numbers generation
+     */
+    public AGMF(DataModel datamodel, int numFactors, int numIters, int numGroups, double lambda, double gamma, long seed){
+        this(datamodel, numFactors, numIters, numGroups, lambda, lambda, lambda, gamma, gamma, gamma, seed);
+    }
+
+    /**
+     * Model constructor
      *
      * @param datamodel DataModel instance
      * @param numFactors Number of factors
@@ -204,11 +218,14 @@ public class AGMF extends Recommender {
         return this.numIters;
     }
 
+    public double[] getGroups(User user){return w[user.getUserIndex()]; }
+
     /**
      * Get the regularization parameter of the model
      *
      * @return Lambda_p
      */
+
     public double getLambda_p() {
         return this.lambda_p;
     }
