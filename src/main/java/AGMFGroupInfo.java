@@ -9,7 +9,7 @@ public class AGMFGroupInfo {
         try {
             DataModel datamodel = DataModel.load("ml-1m");
 
-            AGMF agmf = new AGMF(datamodel, 7, 100, numgroups, 43L);
+            AGMF agmf = new AGMF(datamodel, 4, 50, numgroups, 43L);
             agmf.fit();
 
             for (User user : datamodel.getUsers()){

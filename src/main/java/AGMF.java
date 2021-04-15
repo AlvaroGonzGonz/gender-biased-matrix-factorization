@@ -324,8 +324,8 @@ public class AGMF extends Recommender {
             for(int k = 0; k < this.numFactors; k++) {
                 result += this.softmax(userIndex, g) * this.p[userIndex][g][k] * this.q[itemIndex][g][k];
             }
-        }
 
+        }
         return result;
     }
 
@@ -375,18 +375,24 @@ public class AGMF extends Recommender {
             for (int pos = 0; pos < user.getNumberOfRatings(); pos++) {
                 int itemIndex = user.getItemAt(pos);
                 double error = user.getRatingAt(pos) - predict(userIndex, itemIndex);
-                for (int g = 0; g< numGroups; g++) {
+                double[] gradient_w = new double[numGroups];
+                for(int i=0; i<gradient_w.length; i++)
+                    gradient_w[i] = 0.0;
+                for (int g = 0; g < numGroups; g++) {
                     for (int k = 0; k < numFactors; k++) {
                         p[userIndex][g][k] += gamma_p * (this.softmax(userIndex, g) * error * q[itemIndex][g][k] - lambda_p * p[userIndex][g][k]);
                     }
 
                     for (int k = 0; k < numGroups; k++) {
-                        if (g == k) {
-                            w[userIndex][g] += gamma_w * (((1 - this.softmax(userIndex, g)) * this.softmax(userIndex, g)) * Math.pow(error, 2) - lambda_w * w[userIndex][g]);
-                        } else if (g != k) {
-                            w[userIndex][g] += gamma_w * ((-this.softmax(userIndex, g) * this.softmax(userIndex, k)) * Math.pow(error, 2) - lambda_w * w[userIndex][g]);
+                        if (g != k) {
+                            gradient_w[g] += (-this.softmax(userIndex, g)) * this.softmax(userIndex, k) * Math.pow(error, 2);
+                        } else {
+                            gradient_w[g] += (1 - this.softmax(userIndex, g)) * this.softmax(userIndex, g) * Math.pow(error, 2);
                         }
                     }
+                }
+                for(int g=0; g<numGroups; g++){
+                    w[userIndex][g] -= gamma_w * (gradient_w[g] + lambda_w * w[userIndex][g]);
                 }
             }
         }
@@ -395,12 +401,20 @@ public class AGMF extends Recommender {
         public void afterRun() {}
 
         public double softmax(int userIndex, int group){
+            double result;
             double sum = 0.0;
             for(int g = 0; g < numGroups; g++){
                 sum += Math.exp(w[userIndex][g]);
             }
 
-            return (Math.exp(w[userIndex][group])/sum);
+            if(Double.isNaN(sum)) {
+                result = 0.0;
+            } else {
+                result = Math.exp(w[userIndex][group])/sum;
+            }
+
+
+            return result;
         }
     }
 
