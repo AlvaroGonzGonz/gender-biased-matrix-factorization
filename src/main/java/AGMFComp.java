@@ -8,7 +8,7 @@ import es.upm.etsisi.cf4j.util.plot.LinePlot;
 
 public class AGMFComp {
     private static final int[] AGES = {1, 18, 25, 35, 45, 50, 56};
-    private static final int NUM_ITERS = 50;
+    private static final int NUM_ITERS = 100;
     private static final long RANDOM_SEED = 43L;
 
     public static void main (String[] args){
@@ -20,7 +20,7 @@ public class AGMFComp {
             plot.addSeries("PMF");
             plot.addSeries("AGMF");
 
-            Recommender agmf = new AGMF(datamodel, 7, NUM_ITERS, 7, 0.045, 0.01, RANDOM_SEED);
+            Recommender agmf = new AGMF(datamodel, 4, NUM_ITERS, 7, 0.01, 0.09, RANDOM_SEED);
             agmf.fit();
 
             Recommender pmf = new PMF(datamodel, 7, NUM_ITERS, 0.045, 0.01, RANDOM_SEED);

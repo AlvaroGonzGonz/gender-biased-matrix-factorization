@@ -3,13 +3,13 @@ import es.upm.etsisi.cf4j.data.User;
 import es.upm.etsisi.cf4j.recommender.Recommender;
 
 public class AGMFGroupInfo {
-    private static int numgroups = 4;
+    private static int numgroups = 2;
 
     public static void main (String[] args){
         try {
             DataModel datamodel = DataModel.load("ml-1m");
 
-            AGMF agmf = new AGMF(datamodel, 4, 50, numgroups, 43L);
+            AGMF agmf = new AGMF(datamodel, 7, 50, numgroups, 43L);
             agmf.fit();
 
             for (User user : datamodel.getUsers()){
