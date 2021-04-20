@@ -70,12 +70,12 @@ public class AGMF extends Recommender {
                 (int) params.get("numFactors"),
                 (int) params.get("numIters"),
                 (int) params.get("numGroups"),
-                params.containsKey("lambda_p") ? (double) params.get("lambda_p") : DEFAULT_LAMBDA,
-                params.containsKey("lambda_q") ? (double) params.get("lambda_q") : DEFAULT_LAMBDA,
-                params.containsKey("lambda_w") ? (double) params.get("lambda_w") : DEFAULT_LAMBDA,
-                params.containsKey("gamma_p") ? (double) params.get("gamma_p") : DEFAULT_GAMMA,
-                params.containsKey("gamma_q") ? (double) params.get("gamma_q") : DEFAULT_GAMMA,
-                params.containsKey("gamma_w") ? (double) params.get("gamma_w") : DEFAULT_GAMMA,
+                params.containsKey("lambda_p") ? (double) params.get("lambda_p") : params.containsKey("lambda") ? (double) params.get("lambda") : DEFAULT_LAMBDA,
+                params.containsKey("lambda_q") ? (double) params.get("lambda_q") : params.containsKey("lambda") ? (double) params.get("lambda") : DEFAULT_LAMBDA,
+                params.containsKey("lambda_w") ? (double) params.get("lambda_w") : params.containsKey("lambda") ? (double) params.get("lambda") : DEFAULT_LAMBDA,
+                params.containsKey("gamma_p") ? (double) params.get("gamma_p") : params.containsKey("gamma") ? (double) params.get("gamma") : DEFAULT_GAMMA,
+                params.containsKey("gamma_q") ? (double) params.get("gamma_q") : params.containsKey("gamma") ? (double) params.get("gamma") : DEFAULT_GAMMA,
+                params.containsKey("gamma_w") ? (double) params.get("gamma_w") : params.containsKey("gamma") ? (double) params.get("gamma") : DEFAULT_GAMMA,
                 params.containsKey("seed") ? (long) params.get("seed") : System.currentTimeMillis());
     }
 
