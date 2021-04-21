@@ -6,6 +6,9 @@ import es.upm.etsisi.cf4j.data.User;
 import es.upm.etsisi.cf4j.recommender.Recommender;
 import es.upm.etsisi.cf4j.util.Maths;
 
+import java.io.FileWriter;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 
@@ -304,6 +307,43 @@ public class AGMF extends Recommender {
         return (Math.exp(w[userIndex][group])/sum);
     }
 
+    public void groupsToFile(String path){
+        Map<String,String>[] id2groups = new HashMap[this.numGroups];
+
+        for(int i=0; i< id2groups.length; i++){
+            id2groups[i] = new HashMap();
+        }
+
+        for (User user : this.datamodel.getUsers()) {
+            double[] grupos = this.getGroups(user);
+
+            double max = Double.MIN_VALUE;
+            int max_pos = 0;
+            for (int i = 0; i < grupos.length; i++) {
+                if (grupos[i] > max) {
+                    max = grupos[i];
+                    max_pos = i;
+                }
+            }
+
+            id2groups[max_pos].put(user.getId(), user.getId());
+        }
+        try {
+            for (int i=0; i<this.numGroups; i++) {
+                FileWriter fw = new FileWriter(path + "/usersGroup" + (i + 1));
+
+                for(String key : id2groups[i].keySet()){
+                    fw.write(key + "\n");
+                }
+                fw.flush();
+                fw.close();
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+
     @Override
     public void fit() {
         System.out.println("\nFitting " + this.toString());
@@ -399,20 +439,12 @@ public class AGMF extends Recommender {
         public void afterRun() {}
 
         public double softmax(int userIndex, int group){
-            double result;
             double sum = 0.0;
             for(int g = 0; g < numGroups; g++){
                 sum += Math.exp(w[userIndex][g]);
             }
 
-            if(Double.isNaN(sum)) {
-                result = 0.0;
-            } else {
-                result = Math.exp(w[userIndex][group])/sum;
-            }
-
-
-            return result;
+            return (Math.exp(w[userIndex][group])/sum);
         }
     }
 

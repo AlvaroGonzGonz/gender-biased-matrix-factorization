@@ -16,7 +16,9 @@ public class AGMFGroupInfo {
             AGMF agmf = new AGMF(datamodel, 9, 50, numgroups, 0.01, 0.08, 43L);
             agmf.fit();
 
-            for (User user : datamodel.getUsers()){
+            agmf.groupsToFile("AGMF");
+
+            /*for (User user : datamodel.getUsers()){
                 double[] grupos = agmf.getGroups(user);
 
                 double max = Double.MIN_VALUE;
@@ -60,7 +62,7 @@ public class AGMFGroupInfo {
                 System.out.println("De los cuales:");
                 System.out.println("\t-" + genero[i][0] + " son mujeres.");
                 System.out.println("\t-" + genero[i][1] + " son hombres.");
-            }
+            }*/
         }catch (Exception e){
             e.printStackTrace();
         }
