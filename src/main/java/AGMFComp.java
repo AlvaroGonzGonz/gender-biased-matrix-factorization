@@ -20,7 +20,7 @@ public class AGMFComp {
             plot.addSeries("PMF");
             plot.addSeries("AGMF");
 
-            Recommender agmf = new AGMF(datamodel, 9, NUM_ITERS, 7, 0.01, 0.08, RANDOM_SEED);
+            Recommender agmf = new AGMF(datamodel, 5, NUM_ITERS, 9, 100.0, 0.01, 0.1, RANDOM_SEED);
             agmf.fit();
 
             Recommender pmf = new PMF(datamodel, 9, NUM_ITERS, 0.045, 0.01, RANDOM_SEED);

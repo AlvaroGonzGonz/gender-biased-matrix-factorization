@@ -20,6 +20,7 @@ public class AGMF extends Recommender {
 
     protected static final double DEFAULT_GAMMA = 0.01;
     protected static final double DEFAULT_LAMBDA = 0.05;
+    protected static final double DEFAULT_BETA = 1.0;
 
     /** User factors */
     protected final double[][][] p;
@@ -39,6 +40,9 @@ public class AGMF extends Recommender {
     protected final double lambda_p;
     protected final double lambda_q;
     protected final double lambda_w;
+
+    /** Softmax parameter */
+    protected final double beta;
 
     /** Number of latent factors */
     protected final int numFactors;
@@ -73,6 +77,7 @@ public class AGMF extends Recommender {
                 (int) params.get("numFactors"),
                 (int) params.get("numIters"),
                 (int) params.get("numGroups"),
+                params.containsKey("beta") ? (double) params.get("beta") : DEFAULT_BETA,
                 params.containsKey("lambda_p") ? (double) params.get("lambda_p") : params.containsKey("lambda") ? (double) params.get("lambda") : DEFAULT_LAMBDA,
                 params.containsKey("lambda_q") ? (double) params.get("lambda_q") : params.containsKey("lambda") ? (double) params.get("lambda") : DEFAULT_LAMBDA,
                 params.containsKey("lambda_w") ? (double) params.get("lambda_w") : params.containsKey("lambda") ? (double) params.get("lambda") : DEFAULT_LAMBDA,
@@ -90,7 +95,7 @@ public class AGMF extends Recommender {
      * @param numIters Number of iterations
      */
     public AGMF(DataModel datamodel, int numFactors, int numIters, int numGroups) {
-        this(datamodel, numFactors, numIters, numGroups, DEFAULT_LAMBDA);
+        this(datamodel, numFactors, numIters, numGroups, DEFAULT_BETA, DEFAULT_LAMBDA);
     }
 
     /**
@@ -101,8 +106,8 @@ public class AGMF extends Recommender {
      * @param numIters Number of iterations
      * @param seed Seed for random numbers generation
      */
-    public AGMF(DataModel datamodel, int numFactors, int numIters, int numGroups, long seed) {
-        this(datamodel, numFactors, numIters, numGroups, DEFAULT_LAMBDA, DEFAULT_LAMBDA, DEFAULT_LAMBDA, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, seed);
+    public AGMF(DataModel datamodel, int numFactors, int numIters, int numGroups, double beta, long seed) {
+        this(datamodel, numFactors, numIters, numGroups, beta, DEFAULT_LAMBDA, DEFAULT_LAMBDA, DEFAULT_LAMBDA, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, seed);
     }
 
     /**
@@ -113,8 +118,8 @@ public class AGMF extends Recommender {
      * @param numIters Number of iterations
      * @param lambda Regularization parameter
      */
-    public AGMF(DataModel datamodel, int numFactors, int numIters, int numGroups, double lambda) {
-        this(datamodel, numFactors, numIters, numGroups, lambda, lambda, lambda, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, System.currentTimeMillis());
+    public AGMF(DataModel datamodel, int numFactors, int numIters, int numGroups, double beta, double lambda) {
+        this(datamodel, numFactors, numIters, numGroups, beta, lambda, lambda, lambda, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, System.currentTimeMillis());
     }
 
     /**
@@ -126,8 +131,8 @@ public class AGMF extends Recommender {
      * @param lambda Regularization parameter
      * @param seed Seed for random numbers generation
      */
-    public AGMF(DataModel datamodel, int numFactors, int numIters, int numGroups, double lambda, long seed) {
-        this(datamodel, numFactors, numIters, numGroups, lambda, lambda, lambda, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, seed);
+    public AGMF(DataModel datamodel, int numFactors, int numIters, int numGroups, double beta, double lambda, long seed) {
+        this(datamodel, numFactors, numIters, numGroups, beta, lambda, lambda, lambda, DEFAULT_GAMMA, DEFAULT_GAMMA, DEFAULT_GAMMA, seed);
     }
 
     /**
@@ -140,8 +145,8 @@ public class AGMF extends Recommender {
      * @param gamma Learning rate parameter
      * @seed Seed for random numbers generation
      */
-    public AGMF(DataModel datamodel, int numFactors, int numIters, int numGroups, double lambda, double gamma, long seed){
-        this(datamodel, numFactors, numIters, numGroups, lambda, lambda, lambda, gamma, gamma, gamma, seed);
+    public AGMF(DataModel datamodel, int numFactors, int numIters, int numGroups, double beta, double lambda, double gamma, long seed){
+        this(datamodel, numFactors, numIters, numGroups, beta, lambda, lambda, lambda, gamma, gamma, gamma, seed);
     }
 
     /**
@@ -160,12 +165,13 @@ public class AGMF extends Recommender {
      * @param seed Seed for random numbers generation
      */
     public AGMF(
-            DataModel datamodel, int numFactors, int numIters, int numGroups, double lambda_p, double lambda_q, double lambda_w, double gamma_p, double gamma_q, double gamma_w, long seed) {
+            DataModel datamodel, int numFactors, int numIters, int numGroups, double beta, double lambda_p, double lambda_q, double lambda_w, double gamma_p, double gamma_q, double gamma_w, long seed) {
         super(datamodel);
 
         this.numFactors = numFactors;
         this.numIters = numIters;
         this.numGroups = numGroups;
+        this.beta = beta;
         this.lambda_p = lambda_p;
         this.lambda_q = lambda_q;
         this.lambda_w = lambda_w;
@@ -301,10 +307,10 @@ public class AGMF extends Recommender {
     public double softmax(int userIndex, int group){
         double sum = 0.0;
         for(int g = 0; g < numGroups; g++){
-            sum += Math.exp(w[userIndex][g]);
+            sum += Math.exp(this.beta * w[userIndex][g]);
         }
 
-        return (Math.exp(w[userIndex][group])/sum);
+        return (Math.exp(this.beta * w[userIndex][group])/sum);
     }
 
     public void groupsToFile(String path){
@@ -441,10 +447,10 @@ public class AGMF extends Recommender {
         public double softmax(int userIndex, int group){
             double sum = 0.0;
             for(int g = 0; g < numGroups; g++){
-                sum += Math.exp(w[userIndex][g]);
+                sum += Math.exp(beta * w[userIndex][g]);
             }
 
-            return (Math.exp(w[userIndex][group])/sum);
+            return (Math.exp(beta * w[userIndex][group])/sum);
         }
     }
 
@@ -474,10 +480,10 @@ public class AGMF extends Recommender {
         public double softmax(int userIndex, int group){
             double sum = 0.0;
             for(int g = 0; g < numGroups; g++){
-                sum += Math.exp(w[userIndex][g]);
+                sum += Math.exp(beta * w[userIndex][g]);
             }
 
-            return (Math.exp(w[userIndex][group])/sum);
+            return (Math.exp(beta * w[userIndex][group])/sum);
         }
     }
 }
